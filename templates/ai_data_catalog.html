@@ -1,0 +1,1556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GENFLOW - AI-Driven Data Cataloging & Semantic Search</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #6366f1;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: var(--dark);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+            border-radius: 0 0 12px 12px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            background-color: white;
+            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 20px;
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 22px;
+            letter-spacing: 0.5px;
+        }
+
+        .header-title {
+            font-size: 16px;
+            font-weight: 500;
+            opacity: 0.9;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 6px 12px;
+            border-radius: 20px;
+        }
+
+        .main-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .main-title i {
+            font-size: 32px;
+        }
+
+        .subtitle {
+            font-size: 16px;
+            color: var(--gray);
+            margin-bottom: 32px;
+            max-width: 800px;
+            line-height: 1.6;
+        }
+
+        /* Search Section */
+        .search-section {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            margin-bottom: 24px;
+            border: 1px solid var(--gray-light);
+        }
+
+        .search-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .search-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .search-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 14px 20px 14px 50px;
+            border: 1px solid var(--gray-light);
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s;
+            background-color: #f8fafc;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+            background-color: white;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray);
+            font-size: 18px;
+        }
+
+        .search-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .button {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+        }
+
+        .button-secondary {
+            background: white;
+            color: var(--primary);
+            border: 1px solid var(--gray-light);
+            box-shadow: none;
+        }
+
+        /* Results Section */
+        .results-section {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 24px;
+        }
+
+        /* Filters Panel */
+        .filters-panel {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--gray-light);
+            height: fit-content;
+        }
+
+        .filters-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .filters-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .filter-group {
+            margin-bottom: 20px;
+        }
+
+        .filter-group-title {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .filter-checkbox {
+            margin-right: 10px;
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary);
+        }
+
+        .filter-label {
+            font-size: 14px;
+            color: var(--dark);
+            cursor: pointer;
+        }
+
+        .filter-count {
+            margin-left: auto;
+            font-size: 12px;
+            color: var(--gray);
+            background: var(--gray-light);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        /* Results Grid */
+        .results-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .results-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .results-count {
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .results-sort {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sort-label {
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .sort-select {
+            border: 1px solid var(--gray-light);
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 14px;
+            background-color: white;
+        }
+
+        /* Dataset Cards */
+        .dataset-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--gray-light);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .dataset-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+            border-color: var(--primary-light);
+        }
+
+        .dataset-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 12px;
+        }
+
+        .dataset-name {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 4px;
+        }
+
+        .dataset-source {
+            font-size: 14px;
+            color: var(--gray);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .dataset-badge {
+            background-color: var(--gray-light);
+            color: var(--dark);
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .dataset-description {
+            font-size: 14px;
+            color: var(--dark);
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+
+        .dataset-stats {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: var(--gray);
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .dataset-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .tag {
+            background-color: #e0e7ff;
+            color: var(--primary);
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .dataset-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 16px;
+        }
+
+        /* Semantic Relationships */
+        .relationships-section {
+            margin-top: 32px;
+        }
+
+        .relationships-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .relationships-container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--gray-light);
+        }
+
+        .relationship-graph {
+            width: 100%;
+            height: 400px;
+            background-color: #f8fafc;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray);
+            font-size: 16px;
+            border: 1px dashed var(--gray-light);
+        }
+
+        /* Knowledge Graph */
+        .knowledge-graph {
+            margin-top: 32px;
+        }
+
+        .knowledge-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .knowledge-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 16px;
+        }
+
+        .knowledge-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--gray-light);
+        }
+
+        .knowledge-card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .knowledge-card-content {
+            font-size: 14px;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .results-section {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-title {
+                font-size: 24px;
+            }
+            
+            .dataset-stats {
+                flex-wrap: wrap;
+            }
+            
+            .search-actions {
+                flex-direction: column;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(79, 70, 229, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Empty State */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .empty-icon {
+            font-size: 48px;
+            color: var(--gray-light);
+            margin-bottom: 16px;
+        }
+
+        .empty-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 8px;
+        }
+
+        .empty-description {
+            font-size: 14px;
+            color: var(--gray);
+            max-width: 400px;
+            margin-bottom: 16px;
+        }
+
+        /* Semantic Highlight */
+        .semantic-highlight {
+            background-color: rgba(16, 185, 129, 0.1);
+            padding: 2px 4px;
+            border-radius: 4px;
+            color: var(--secondary);
+            font-weight: 500;
+        }
+
+        /* AI Suggestions */
+        .ai-suggestions {
+            background-color: #f0f9ff;
+            border-left: 4px solid var(--info);
+            padding: 16px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+
+        .ai-suggestion-title {
+            font-weight: 600;
+            color: var(--info);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ai-suggestion-text {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--dark);
+        }
+
+        /* Dark mode toggle */
+        .dark-mode-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: var(--primary);
+            color: white;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            z-index: 100;
+        }
+
+        .dark {
+            background-color: #1a202c;
+            color: #f7fafc;
+        }
+
+        .dark .header {
+            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+        }
+
+        .dark .search-section,
+        .dark .filters-panel,
+        .dark .dataset-card,
+        .dark .relationships-container,
+        .dark .knowledge-card {
+            background-color: #2d3748;
+            border-color: #4a5568;
+            color: #f7fafc;
+        }
+
+        .dark .search-input,
+        .dark .sort-select {
+            background-color: #4a5568;
+            border-color: #4a5568;
+            color: #f7fafc;
+        }
+
+        .dark .stat-value,
+        .dark .dataset-name,
+        .dark .dataset-description,
+        .dark .knowledge-card-title,
+        .dark .knowledge-card-content,
+        .dark .results-title,
+        .dark .filter-group-title,
+        .dark .filters-title,
+        .dark .search-title {
+            color: #f7fafc;
+        }
+
+        .dark .stat-label,
+        .dark .dataset-source,
+        .dark .results-count,
+        .dark .sort-label,
+        .dark .subtitle {
+            color: #cbd5e0;
+        }
+
+        .dark .relationship-graph {
+            background-color: #4a5568;
+            border-color: #718096;
+        }
+
+        .dark .tag {
+            background-color: #4a5568;
+            color: #f7fafc;
+        }
+
+        .dark .ai-suggestions {
+            background-color: #2d3748;
+            border-left-color: var(--info);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon">G</div>
+            <div class="logo-text">GENFLOW</div>
+        </div>
+        <div class="header-title">AI-Driven Data Cataloging & Semantic Search</div>
+    </div>
+
+    <div class="container">
+        <h1 class="main-title">
+            <i class="fas fa-robot"></i>
+            AI-Driven Data Cataloging & Semantic Search
+        </h1>
+        <p class="subtitle">
+            Discover, understand, and leverage your data assets with our AI-powered catalog. 
+            The system automatically analyzes your datasets, extracts metadata, and builds a 
+            semantic knowledge graph to enable intelligent search and discovery.
+        </p>
+
+        <div class="search-section">
+            <div class="search-header">
+                <h2 class="search-title">
+                    <i class="fas fa-search"></i>
+                    Semantic Search
+                </h2>
+            </div>
+            <div class="search-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" class="search-input" id="searchInput" placeholder="Search datasets by name, description, or ask a natural language question...">
+            </div>
+            <div class="search-actions">
+                <button class="button" id="searchButton">
+                    <i class="fas fa-search"></i>
+                    Search
+                </button>
+                <button class="button button-secondary" id="askAiButton">
+                    <i class="fas fa-lightbulb"></i>
+                    Ask AI Assistant
+                </button>
+            </div>
+
+            <div class="ai-suggestions" id="aiSuggestions" style="display: none;">
+                <div class="ai-suggestion-title">
+                    <i class="fas fa-lightbulb"></i>
+                    AI Suggestions
+                </div>
+                <div class="ai-suggestion-text" id="aiSuggestionText">
+                    Based on your data catalog, I can suggest that you might want to explore customer-related datasets for marketing analysis.
+                </div>
+            </div>
+        </div>
+
+        <div class="results-section">
+            <div class="filters-panel">
+                <div class="filters-header">
+                    <h3 class="filters-title">Filters</h3>
+                    <button class="button button-secondary button-sm" id="resetFilters">
+                        Reset
+                    </button>
+                </div>
+
+                <div class="filter-group">
+                    <h4 class="filter-group-title">
+                        <i class="fas fa-database"></i>
+                        Data Source
+                    </h4>
+                    <div class="filter-item">
+                        <input type="checkbox" id="filter-source-database" class="filter-checkbox" checked>
+                        <label for="filter-source-database" class="filter-label">Databases</label>
+                        <span class="filter-count">42</span>
+                    </div>
+                    <div class="filter-item">
+                        <input type="checkbox" id="filter-source-files" class="filter-checkbox" checked>
+                        <label for="filter-source-files" class="filter-label">Files</label>
+                        <span class="filter-count">28</span>
+                    </div>
+                    <div class="filter-item">
+                        <input type="checkbox" id="filter-source-apis" class="filter-checkbox" checked>
+                        <label for="filter-source-apis" class="filter-label">APIs</label>
+                        <span class="filter-count">15</span>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <h4 class="filter-group-title">
+                        <i class="fas fa-tag"></i>
+                        Data Type
+                    </h4>
+                    <div class="filter-item">
+                        <input type="checkbox" id="filter-type-structured" class="filter-checkbox" checked>
+                        <label for="filter-type-structured" class="filter-label">Structured</label>
+                        <span class="filter-count">65</span>
+                    </div>
+                    <div class="filter-item">
+                        <input type="checkbox" id="filter-type-unstructured" class="filter-checkbox" checked>
+                        <label for="filter-type-unstructured" class="filter-label">Unstructured</label>
+                        <span class="filter-count">12</span>
+                    </div>
+                    <div class="filter-item">
+                        <input type="checkbox" id="filter-type-timeseries" class="filter-checkbox" checked>
+                        <label for="filter-type-timeseries" class="filter-label">Time Series</label>
+                        <span class="filter-count">8</span>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <h4 class="filter-group-title">
+                        <i class="fas fa-calendar"></i>
+                        Last Updated
+                    </h4>
+                    <div class="filter-item">
+                        <input type="checkbox" id="filter-updated-day" class="filter-checkbox">
+                        <label for="filter-updated-day" class="filter-label">Last 24 hours</label>
+                        <span class="filter-count">5</span>
+                    </div>
+                    <div class="filter-item">
+                        <input type="checkbox" id="filter-updated-week" class="filter-checkbox" checked>
+                        <label for="filter-updated-week" class="filter-label">Last 7 days</label>
+                        <span class="filter-count">23</span>
+                    </div>
+                    <div class="filter-item">
+                        <input type="checkbox" id="filter-updated-month" class="filter-checkbox" checked>
+                        <label for="filter-updated-month" class="filter-label">Last 30 days</label>
+                        <span class="filter-count">52</span>
+                    </div>
+                </div>
+
+                <div class="filter-group">
+                    <h4 class="filter-group-title">
+                        <i class="fas fa-star"></i>
+                        Data Quality
+                    </h4>
+                    <div class="filter-item">
+                        <input type="checkbox" id="filter-quality-high" class="filter-checkbox" checked>
+                        <label for="filter-quality-high" class="filter-label">High Quality</label>
+                        <span class="filter-count">38</span>
+                    </div>
+                    <div class="filter-item">
+                        <input type="checkbox" id="filter-quality-medium" class="filter-checkbox" checked>
+                        <label for="filter-quality-medium" class="filter-label">Medium Quality</label>
+                        <span class="filter-count">27</span>
+                    </div>
+                    <div class="filter-item">
+                        <input type="checkbox" id="filter-quality-low" class="filter-checkbox">
+                        <label for="filter-quality-low" class="filter-label">Needs Improvement</label>
+                        <span class="filter-count">10</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="results-grid">
+                <div class="results-header">
+                    <h3 class="results-title">Datasets</h3>
+                    <div class="results-count">Showing 8 of 85 results</div>
+                    <div class="results-sort">
+                        <span class="sort-label">Sort by:</span>
+                        <select class="sort-select" id="sortSelect">
+                            <option value="relevance">Relevance</option>
+                            <option value="name">Name (A-Z)</option>
+                            <option value="name-desc">Name (Z-A)</option>
+                            <option value="updated">Last Updated</option>
+                            <option value="quality">Data Quality</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="resultsContainer">
+                    <!-- Sample Dataset Cards -->
+                    <div class="dataset-card">
+                        <div class="dataset-header">
+                            <div>
+                                <h3 class="dataset-name">customer_transactions</h3>
+                                <div class="dataset-source">
+                                    <i class="fas fa-database"></i>
+                                    PostgreSQL - Sales Database
+                                </div>
+                            </div>
+                            <div class="dataset-badge">
+                                <i class="fas fa-star"></i>
+                                High Quality
+                            </div>
+                        </div>
+                        <p class="dataset-description">
+                            Contains <span class="semantic-highlight">customer transaction records</span> from the past 5 years, including purchase amounts, dates, and product categories. 
+                            The AI has identified this as a <span class="semantic-highlight">key dataset for revenue analysis</span> and customer segmentation.
+                        </p>
+                        <div class="dataset-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Records</span>
+                                <span class="stat-value">1,245,789</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Columns</span>
+                                <span class="stat-value">18</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Updated</span>
+                                <span class="stat-value">2 hours ago</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Completeness</span>
+                                <span class="stat-value">98%</span>
+                            </div>
+                        </div>
+                        <div class="dataset-tags">
+                            <span class="tag">
+                                <i class="fas fa-tag"></i>
+                                finance
+                            </span>
+                            <span class="tag">
+                                <i class="fas fa-tag"></i>
+                                customers
+                            </span>
+                            <span class="tag">
+                                <i class="fas fa-tag"></i>
+                                transactions
+                            </span>
+                            <span class="tag">
+                                <i class="fas fa-tag"></i>
+                                time-series
+                            </span>
+                        </div>
+                        <div class="dataset-actions">
+                            <button class="button button-sm">
+                                <i class="fas fa-eye"></i>
+                                Preview
+                            </button>
+                            <button class="button button-secondary button-sm">
+                                <i class="fas fa-project-diagram"></i>
+                                Relationships
+                            </button>
+                            <button class="button button-secondary button-sm">
+                                <i class="fas fa-download"></i>
+                                Export Metadata
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="dataset-card">
+                        <div class="dataset-header">
+                            <div>
+                                <h3 class="dataset-name">product_inventory</h3>
+                                <div class="dataset-source">
+                                    <i class="fas fa-file-excel"></i>
+                                    Excel - Inventory Management
+                                </div>
+                            </div>
+                            <div class="dataset-badge">
+                                <i class="fas fa-check-circle"></i>
+                                Medium Quality
+                            </div>
+                        </div>
+                        <p class="dataset-description">
+                            Tracks current <span class="semantic-highlight">product inventory levels</span> across all warehouses. The AI has detected some inconsistencies in 
+                            <span class="semantic-highlight">stock counts</span> that may require reconciliation with the ERP system.
+                        </p>
+                        <div class="dataset-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Records</span>
+                                <span class="stat-value">4,521</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Columns</span>
+                                <span class="stat-value">12</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Updated</span>
+                                <span class="stat-value">1 day ago</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Completeness</span>
+                                <span class="stat-value">87%</span>
+                            </div>
+                        </div>
+                        <div class="dataset-tags">
+                            <span class="tag">
+                                <i class="fas fa-tag"></i>
+                                inventory
+                            </span>
+                            <span class="tag">
+                                <i class="fas fa-tag"></i>
+                                products
+                            </span>
+                            <span class="tag">
+                                <i class="fas fa-tag"></i>
+                                supply-chain
+                            </span>
+                        </div>
+                        <div class="dataset-actions">
+                            <button class="button button-sm">
+                                <i class="fas fa-eye"></i>
+                                Preview
+                            </button>
+                            <button class="button button-secondary button-sm">
+                                <i class="fas fa-project-diagram"></i>
+                                Relationships
+                            </button>
+                            <button class="button button-secondary button-sm">
+                                <i class="fas fa-download"></i>
+                                Export Metadata
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="dataset-card">
+                        <div class="dataset-header">
+                            <div>
+                                <h3 class="dataset-name">marketing_campaigns</h3>
+                                <div class="dataset-source">
+                                    <i class="fas fa-cloud"></i>
+                                    Salesforce API
+                                </div>
+                            </div>
+                            <div class="dataset-badge">
+                                <i class="fas fa-star"></i>
+                                High Quality
+                            </div>
+                        </div>
+                        <p class="dataset-description">
+                            Detailed records of all <span class="semantic-highlight">marketing campaigns</span> run in the past 3 years, including channels, budgets, and performance metrics. 
+                            The AI suggests this dataset is strongly related to <span class="semantic-highlight">customer acquisition costs</span>.
+                        </p>
+                        <div class="dataset-stats">
+                            <div class="stat-item">
+                                <span class="stat-label">Records</span>
+                                <span class="stat-value">342</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Columns</span>
+                                <span class="stat-value">24</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Updated</span>
+                                <span class="stat-value">3 days ago</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Completeness</span>
+                                <span class="stat-value">95%</span>
+                            </div>
+                        </div>
+                        <div class="dataset-tags">
+                            <span class="tag">
+                                <i class="fas fa-tag"></i>
+                                marketing
+                            </span>
+                            <span class="tag">
+                                <i class="fas fa-tag"></i>
+                                campaigns
+                            </span>
+                            <span class="tag">
+                                <i class="fas fa-tag"></i>
+                                performance
+                            </span>
+                        </div>
+                        <div class="dataset-actions">
+                            <button class="button button-sm">
+                                <i class="fas fa-eye"></i>
+                                Preview
+                            </button>
+                            <button class="button button-secondary button-sm">
+                                <i class="fas fa-project-diagram"></i>
+                                Relationships
+                            </button>
+                            <button class="button button-secondary button-sm">
+                                <i class="fas fa-download"></i>
+                                Export Metadata
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="relationships-section">
+            <h2 class="relationships-title">
+                <i class="fas fa-project-diagram"></i>
+                Semantic Relationships
+            </h2>
+            <div class="relationships-container">
+                <div class="relationship-graph" id="relationshipGraph">
+                    <div style="text-align: center;">
+                        <i class="fas fa-project-diagram" style="font-size: 48px; color: var(--gray-light); margin-bottom: 16px;"></i>
+                        <p>AI-generated semantic relationships will appear here</p>
+                        <p>Select a dataset to visualize its connections</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="knowledge-graph">
+            <h2 class="knowledge-title">
+                <i class="fas fa-brain"></i>
+                AI-Generated Knowledge
+            </h2>
+            <div class="knowledge-cards">
+                <div class="knowledge-card">
+                    <h3 class="knowledge-card-title">
+                        <i class="fas fa-lightbulb"></i>
+                        Key Business Insights
+                    </h3>
+                    <div class="knowledge-card-content">
+                        The AI has identified that customer transaction data correlates strongly with marketing campaign timing, 
+                        suggesting campaigns have a measurable impact on sales. Seasonal patterns are particularly evident in Q4.
+                    </div>
+                </div>
+                <div class="knowledge-card">
+                    <h3 class="knowledge-card-title">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Data Quality Issues
+                    </h3>
+                    <div class="knowledge-card-content">
+                        Inventory data shows discrepancies between physical counts and system records for 12% of SKUs. 
+                        The AI recommends a reconciliation process before using this data for financial reporting.
+                    </div>
+                </div>
+                <div class="knowledge-card">
+                    <h3 class="knowledge-card-title">
+                        <i class="fas fa-chart-line"></i>
+                        Recommended Analysis
+                    </h3>
+                    <div class="knowledge-card-content">
+                        Combining customer transactions with demographic data could enable powerful segmentation analysis. 
+                        The AI suggests a RFM (Recency, Frequency, Monetary) model would be particularly insightful.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dark-mode-toggle" onclick="document.documentElement.classList.toggle('dark')">
+        <i class="fas fa-moon"></i>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Search functionality
+            const searchInput = document.getElementById('searchInput');
+            const searchButton = document.getElementById('searchButton');
+            const askAiButton = document.getElementById('askAiButton');
+            const aiSuggestions = document.getElementById('aiSuggestions');
+            const resultsContainer = document.getElementById('resultsContainer');
+            
+            // Sample datasets for demo
+            const sampleDatasets = [
+                {
+                    name: "customer_transactions",
+                    source: "PostgreSQL - Sales Database",
+                    sourceIcon: "database",
+                    description: "Contains customer transaction records from the past 5 years, including purchase amounts, dates, and product categories. The AI has identified this as a key dataset for revenue analysis and customer segmentation.",
+                    records: "1,245,789",
+                    columns: "18",
+                    updated: "2 hours ago",
+                    completeness: "98%",
+                    quality: "High Quality",
+                    qualityIcon: "star",
+                    tags: ["finance", "customers", "transactions", "time-series"]
+                },
+                {
+                    name: "product_inventory",
+                    source: "Excel - Inventory Management",
+                    sourceIcon: "file-excel",
+                    description: "Tracks current product inventory levels across all warehouses. The AI has detected some inconsistencies in stock counts that may require reconciliation with the ERP system.",
+                    records: "4,521",
+                    columns: "12",
+                    updated: "1 day ago",
+                    completeness: "87%",
+                    quality: "Medium Quality",
+                    qualityIcon: "check-circle",
+                    tags: ["inventory", "products", "supply-chain"]
+                },
+                {
+                    name: "marketing_campaigns",
+                    source: "Salesforce API",
+                    sourceIcon: "cloud",
+                    description: "Detailed records of all marketing campaigns run in the past 3 years, including channels, budgets, and performance metrics. The AI suggests this dataset is strongly related to customer acquisition costs.",
+                    records: "342",
+                    columns: "24",
+                    updated: "3 days ago",
+                    completeness: "95%",
+                    quality: "High Quality",
+                    qualityIcon: "star",
+                    tags: ["marketing", "campaigns", "performance"]
+                },
+                {
+                    name: "customer_demographics",
+                    source: "MySQL - CRM System",
+                    sourceIcon: "database",
+                    description: "Demographic information for all customers including age, location, and income brackets. The AI has identified potential data privacy considerations with this dataset.",
+                    records: "245,123",
+                    columns: "15",
+                    updated: "5 days ago",
+                    completeness: "92%",
+                    quality: "High Quality",
+                    qualityIcon: "star",
+                    tags: ["customers", "demographics", "privacy"]
+                },
+                {
+                    name: "web_analytics",
+                    source: "Google Analytics API",
+                    sourceIcon: "chart-bar",
+                    description: "Website traffic and user behavior data collected over the past 2 years. The AI notes strong correlations between certain pages and conversion rates.",
+                    records: "1,842,356",
+                    columns: "32",
+                    updated: "1 hour ago",
+                    completeness: "99%",
+                    quality: "High Quality",
+                    qualityIcon: "star",
+                    tags: ["web", "analytics", "behavior"]
+                }
+            ];
+
+            // Display sample datasets
+            function displayDatasets(datasets) {
+                resultsContainer.innerHTML = '';
+                
+                if (datasets.length === 0) {
+                    resultsContainer.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon">
+                                <i class="fas fa-database"></i>
+                            </div>
+                            <h3 class="empty-title">No datasets found</h3>
+                            <p class="empty-description">Try adjusting your search or filters to find what you're looking for.</p>
+                            <button class="button" id="resetSearch">
+                                <i class="fas fa-sync-alt"></i>
+                                Reset Search
+                            </button>
+                        </div>
+                    `;
+                    
+                    document.getElementById('resetSearch').addEventListener('click', function() {
+                        searchInput.value = '';
+                        displayDatasets(sampleDatasets);
+                    });
+                    
+                    return;
+                }
+                
+                datasets.forEach(dataset => {
+                    const tagsHtml = dataset.tags.map(tag => `
+                        <span class="tag">
+                            <i class="fas fa-tag"></i>
+                            ${tag}
+                        </span>
+                    `).join('');
+                    
+                    const cardHtml = `
+                        <div class="dataset-card">
+                            <div class="dataset-header">
+                                <div>
+                                    <h3 class="dataset-name">${dataset.name}</h3>
+                                    <div class="dataset-source">
+                                        <i class="fas fa-${dataset.sourceIcon}"></i>
+                                        ${dataset.source}
+                                    </div>
+                                </div>
+                                <div class="dataset-badge">
+                                    <i class="fas fa-${dataset.qualityIcon}"></i>
+                                    ${dataset.quality}
+                                </div>
+                            </div>
+                            <p class="dataset-description">${dataset.description}</p>
+                            <div class="dataset-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Records</span>
+                                    <span class="stat-value">${dataset.records}</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Columns</span>
+                                    <span class="stat-value">${dataset.columns}</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Updated</span>
+                                    <span class="stat-value">${dataset.updated}</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Completeness</span>
+                                    <span class="stat-value">${dataset.completeness}</span>
+                                </div>
+                            </div>
+                            <div class="dataset-tags">
+                                ${tagsHtml}
+                            </div>
+                            <div class="dataset-actions">
+                                <button class="button button-sm">
+                                    <i class="fas fa-eye"></i>
+                                    Preview
+                                </button>
+                                <button class="button button-secondary button-sm">
+                                    <i class="fas fa-project-diagram"></i>
+                                    Relationships
+                                </button>
+                                <button class="button button-secondary button-sm">
+                                    <i class="fas fa-download"></i>
+                                    Export Metadata
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    resultsContainer.innerHTML += cardHtml;
+                });
+            }
+            
+            // Initial display
+            displayDatasets(sampleDatasets);
+            
+            // Search functionality
+            searchButton.addEventListener('click', function() {
+                const searchTerm = searchInput.value.toLowerCase();
+                
+                if (searchTerm.trim() === '') {
+                    displayDatasets(sampleDatasets);
+                    return;
+                }
+                
+                // Show loading state
+                resultsContainer.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                `;
+                
+                // Simulate API call delay
+                setTimeout(() => {
+                    const filteredDatasets = sampleDatasets.filter(dataset => 
+                        dataset.name.toLowerCase().includes(searchTerm) || 
+                        dataset.description.toLowerCase().includes(searchTerm) ||
+                        dataset.tags.some(tag => tag.toLowerCase().includes(searchTerm))
+                    );
+                    
+                    displayDatasets(filteredDatasets);
+                    
+                    // Show AI suggestions if results are few
+                    if (filteredDatasets.length <= 2) {
+                        document.getElementById('aiSuggestionText').textContent = 
+                            `I found only ${filteredDatasets.length} datasets matching "${searchTerm}". You might want to try searching for related terms like "${getRelatedTerm(searchTerm)}" or broaden your filters.`;
+                        aiSuggestions.style.display = 'block';
+                    } else {
+                        aiSuggestions.style.display = 'none';
+                    }
+                }, 800);
+            });
+            
+            // Ask AI functionality
+            askAiButton.addEventListener('click', function() {
+                const question = searchInput.value.trim();
+                
+                if (question === '') {
+                    alert('Please enter a question for the AI assistant');
+                    return;
+                }
+                
+                // Show loading state
+                resultsContainer.innerHTML = `
+                    <div class="loading">
+                        <div class="spinner"></div>
+                    </div>
+                `;
+                
+                // Simulate AI processing
+                setTimeout(() => {
+                    // This would be replaced with actual AI API call in production
+                    const aiResponse = generateAiResponse(question);
+                    
+                    // Display AI response
+                    resultsContainer.innerHTML = `
+                        <div class="dataset-card">
+                            <div class="dataset-header">
+                                <div>
+                                    <h3 class="dataset-name">AI Response</h3>
+                                    <div class="dataset-source">
+                                        <i class="fas fa-robot"></i>
+                                        GENFLOW AI Assistant
+                                    </div>
+                                </div>
+                            </div>
+                            <p class="dataset-description">${aiResponse.answer}</p>
+                            <div class="dataset-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">Confidence</span>
+                                    <span class="stat-value">${aiResponse.confidence}%</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Sources</span>
+                                    <span class="stat-value">${aiResponse.sources}</span>
+                                </div>
+                            </div>
+                            <div class="dataset-tags">
+                                <span class="tag">
+                                    <i class="fas fa-lightbulb"></i>
+                                    AI-generated
+                                </span>
+                                <span class="tag">
+                                    <i class="fas fa-calendar"></i>
+                                    ${new Date().toLocaleDateString()}
+                                </span>
+                            </div>
+                            <div class="dataset-actions">
+                                <button class="button button-sm" id="showRelevantDatasets">
+                                    <i class="fas fa-database"></i>
+                                    Show Relevant Datasets
+                                </button>
+                                <button class="button button-secondary button-sm" id="refineQuestion">
+                                    <i class="fas fa-edit"></i>
+                                    Refine Question
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Add event listeners to the new buttons
+                    document.getElementById('showRelevantDatasets').addEventListener('click', function() {
+                        displayDatasets(aiResponse.relevantDatasets);
+                    });
+                    
+                    document.getElementById('refineQuestion').addEventListener('click', function() {
+                        searchInput.value = aiResponse.suggestedQuestion;
+                        searchInput.focus();
+                    });
+                }, 1500);
+            });
+            
+            // Helper function to generate AI responses (simulated)
+            function generateAiResponse(question) {
+                const responses = [
+                    {
+                        questionPattern: "customer",
+                        answer: "Based on your question about customer data, I've identified 3 key datasets that would be relevant: customer_transactions, customer_demographics, and marketing_campaigns. These datasets can help you analyze customer behavior, segmentation, and acquisition costs.",
+                        confidence: 92,
+                        sources: "3 datasets",
+                        suggestedQuestion: "What datasets contain customer purchase history?",
+                        relevantDatasets: [sampleDatasets[0], sampleDatasets[3]]
+                    },
+                    {
+                        questionPattern: "sales|revenue",
+                        answer: "For sales and revenue analysis, the customer_transactions dataset is the most comprehensive. It contains detailed records of all purchases with timestamps, product categories, and amounts. I also recommend combining it with marketing_campaigns to analyze campaign effectiveness.",
+                        confidence: 88,
+                        sources: "2 datasets",
+                        suggestedQuestion: "How can I analyze sales by product category?",
+                        relevantDatasets: [sampleDatasets[0], sampleDatasets[2]]
+                    },
+                    {
+                        questionPattern: "inventory|stock",
+                        answer: "The product_inventory dataset tracks current stock levels across warehouses. The AI has detected some data quality issues that should be addressed before analysis. For historical inventory data, you would need to access the ERP system's data exports.",
+                        confidence: 85,
+                        sources: "1 dataset",
+                        suggestedQuestion: "What inventory data is available for analysis?",
+                        relevantDatasets: [sampleDatasets[1]]
+                    },
+                    {
+                        questionPattern: "marketing",
+                        answer: "Marketing-related data is available in the marketing_campaigns dataset from Salesforce, which includes campaign details and performance metrics. For digital marketing, the web_analytics dataset provides website traffic and conversion data that can be joined with campaign data for full-funnel analysis.",
+                        confidence: 90,
+                        sources: "2 datasets",
+                        suggestedQuestion: "Which datasets contain digital marketing metrics?",
+                        relevantDatasets: [sampleDatasets[2], sampleDatasets[4]]
+                    },
+                    {
+                        questionPattern: "default",
+                        answer: "I've analyzed your question and found several relevant datasets in our catalog. Could you please provide more specific details about what you're trying to accomplish? This will help me give you a more precise answer and dataset recommendations.",
+                        confidence: 75,
+                        sources: "Multiple",
+                        suggestedQuestion: "What types of analysis can I perform with the available data?",
+                        relevantDatasets: sampleDatasets.slice(0, 3)
+                    }
+                ];
+                
+                // Find matching response
+                const matchedResponse = responses.find(r => 
+                    question.toLowerCase().includes(r.questionPattern)
+                ) || responses.find(r => r.questionPattern === "default");
+                
+                return matchedResponse;
+            }
+            
+            // Helper function to suggest related terms
+            function getRelatedTerm(term) {
+                const termMap = {
+                    "cust": "customer",
+                    "sale": "revenue",
+                    "prod": "product",
+                    "mark": "marketing",
+                    "inv": "inventory"
+                };
+                
+                for (const [short, full] of Object.entries(termMap)) {
+                    if (term.includes(short)) {
+                        return full;
+                    }
+                }
+                
+                return "customer"; // default suggestion
+            }
+            
+            // Reset filters
+            document.getElementById('resetFilters').addEventListener('click', function() {
+                document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
+                    checkbox.checked = true;
+                });
+                displayDatasets(sampleDatasets);
+            });
+            
+            // Filter change handlers
+            document.querySelectorAll('.filter-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    // In a real implementation, this would filter the datasets
+                    // For now, we'll just simulate a slight delay
+                    resultsContainer.innerHTML = `
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    `;
+                    
+                    setTimeout(() => {
+                        displayDatasets(sampleDatasets.slice(0, 3)); // Just show subset for demo
+                    }, 500);
+                });
+            });
+            
+            // Sort functionality
+            document.getElementById('sortSelect').addEventListener('change', function() {
+                const sortBy = this.value;
+                let sortedDatasets = [...sampleDatasets];
+                
+                switch(sortBy) {
+                    case 'name':
+                        sortedDatasets.sort((a, b) => a.name.localeCompare(b.name));
+                        break;
+                    case 'name-desc':
+                        sortedDatasets.sort((a, b) => b.name.localeCompare(a.name));
+                        break;
+                    case 'updated':
+                        // Simulate date sorting
+                        sortedDatasets = [
+                            sampleDatasets[4], // 1 hour ago
+                            sampleDatasets[0], // 2 hours ago
+                            sampleDatasets[1], // 1 day ago
+                            sampleDatasets[2], // 3 days ago
+                            sampleDatasets[3]  // 5 days ago
+                        ];
+                        break;
+                    case 'quality':
+                        // High quality first
+                        sortedDatasets.sort((a, b) => {
+                            if (a.quality === "High Quality" && b.quality !== "High Quality") return -1;
+                            if (a.quality !== "High Quality" && b.quality === "High Quality") return 1;
+                            return 0;
+                        });
+                        break;
+                    default:
+                        // Default is relevance (original order)
+                        break;
+                }
+                
+                displayDatasets(sortedDatasets.slice(0, 3)); // Just show subset for demo
+            });
+            
+            // Enable pressing Enter in search input
+            searchInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    searchButton.click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

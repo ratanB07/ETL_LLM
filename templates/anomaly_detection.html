@@ -1,0 +1,1203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GENFLOW - Anomaly Detection</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #6366f1;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: var(--dark);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 24px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            background-color: white;
+            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 20px;
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 22px;
+            letter-spacing: 0.5px;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-light);
+            margin-bottom: 24px;
+            overflow: hidden;
+        }
+
+        .card-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid var(--gray-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-body {
+            padding: 24px;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 400px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-light);
+        }
+
+        .stat-title {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .anomaly-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .anomaly-table th {
+            background-color: #f8fafc;
+            padding: 12px 16px;
+            text-align: left;
+            border: 1px solid var(--gray-light);
+            font-weight: 600;
+        }
+
+        .anomaly-table td {
+            padding: 12px 16px;
+            border: 1px solid var(--gray-light);
+        }
+
+        .anomaly-table tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        .anomaly-badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .anomaly-high {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+
+        .anomaly-medium {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+
+        .anomaly-low {
+            background-color: #ecfdf5;
+            color: #065f46;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+        }
+
+        .btn-secondary {
+            background-color: white;
+            color: var(--primary);
+            border: 1px solid var(--gray-light);
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-left-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--gray-light);
+            margin-bottom: 24px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            font-weight: 500;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            border-bottom-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .tab:hover:not(.active) {
+            background-color: #f8fafc;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .insight-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .insight-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .insight-content {
+            color: var(--gray);
+            line-height: 1.6;
+        }
+
+        .feature-importance {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 16px;
+        }
+
+        .feature-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .feature-name {
+            width: 200px;
+            font-weight: 500;
+        }
+
+        .feature-bar {
+            flex-grow: 1;
+            height: 8px;
+            background-color: #e2e8f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .feature-fill {
+            height: 100%;
+            background-color: var(--primary);
+            border-radius: 4px;
+        }
+
+        .feature-value {
+            width: 60px;
+            text-align: right;
+            font-size: 14px;
+            color: var(--gray);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon">G</div>
+            <div class="logo-text">GENFLOW</div>
+        </div>
+        <div style="font-size: 18px; font-weight: 500;">Anomaly Detection</div>
+    </div>
+
+    <div class="container">
+        <div class="page-title">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span id="dataset-name">Anomaly Detection Results</span>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('overview')">Overview</div>
+            <div class="tab" onclick="switchTab('visualization')">Visualization</div>
+            <div class="tab" onclick="switchTab('anomalies')">Anomalies</div>
+            <div class="tab" onclick="switchTab('insights')">LLM Insights</div>
+        </div>
+
+        <div id="overview-tab" class="tab-content active">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-title">Total Records Analyzed</div>
+                    <div class="stat-value" id="total-records">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Anomalies Detected</div>
+                    <div class="stat-value" id="total-anomalies">0</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Anomaly Rate</div>
+                    <div class="stat-value" id="anomaly-rate">0%</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-title">Most Anomalous Feature</div>
+                    <div class="stat-value" id="top-feature">-</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-chart-line"></i>
+                        Anomaly Distribution
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" id="anomaly-distribution-chart"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-star"></i>
+                        Feature Importance for Anomaly Detection
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="feature-importance" id="feature-importance-container">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="visualization-tab" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-project-diagram"></i>
+                        Multidimensional Anomaly Visualization
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" id="multidimensional-chart"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-wave-square"></i>
+                        Time Series Anomalies
+                    </div>
+                    <div>
+                        <select id="time-series-select" class="btn btn-secondary" style="padding: 8px 12px;">
+                            <option value="">Select feature</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" id="time-series-chart"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="anomalies-tab" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-table"></i>
+                        Detected Anomalies
+                    </div>
+                    <div>
+                        <select id="severity-filter" class="btn btn-secondary" style="padding: 8px 12px;">
+                            <option value="all">All Severities</option>
+                            <option value="high">High Only</option>
+                            <option value="medium">Medium Only</option>
+                            <option value="low">Low Only</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <table class="anomaly-table" id="anomaly-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Timestamp</th>
+                                <th>Features</th>
+                                <th>Severity</th>
+                                <th>Anomaly Score</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="anomaly-table-body">
+                            <!-- Will be populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="insights-tab" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-robot"></i>
+                        LLM-Generated Insights
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div id="llm-insights-container">
+                        <!-- Will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-comment-alt"></i>
+                        Ask About Anomalies
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div style="display: flex; gap: 8px; margin-bottom: 16px;">
+                        <input type="text" id="llm-question" placeholder="Ask about anomalies in the data..." 
+                               style="flex-grow: 1; padding: 10px 12px; border: 1px solid var(--gray-light); border-radius: 6px;">
+                        <button class="btn btn-primary" onclick="askLLM()">
+                            <i class="fas fa-paper-plane"></i> Ask
+                        </button>
+                    </div>
+                    <div id="llm-answer" style="padding: 16px; background-color: #f8fafc; border-radius: 6px; min-height: 100px;">
+                        <p style="color: var(--gray); text-align: center;">Ask a question about the anomalies to get insights from our AI</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn btn-primary" onclick="exportAnomalyReport()">
+                <i class="fas fa-file-export"></i> Export Report
+            </button>
+            <button class="btn btn-secondary" onclick="window.close()">
+                <i class="fas fa-times"></i> Close
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let anomalyData = null;
+        let datasetName = "Untitled Dataset";
+        let timeSeriesChart = null;
+        let multiDimChart = null;
+        let anomalyDistChart = null;
+
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get dataset name from URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const datasetParam = urlParams.get('dataset');
+            
+            if (datasetParam) {
+                datasetName = decodeURIComponent(datasetParam);
+                document.getElementById('dataset-name').textContent = `Anomaly Detection - ${datasetName}`;
+            }
+
+            // Load sample data (in a real app, this would come from an API)
+            loadAnomalyData();
+        });
+
+        // Function to load anomaly data
+        function loadAnomalyData() {
+            // Show loading state
+            document.getElementById('anomaly-table-body').innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 40px;">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                        </div>
+                    </td>
+                </tr>
+            `;
+
+            // Simulate API call with timeout
+            setTimeout(() => {
+                // In a real app, this would be a fetch call to your backend
+                // fetch('/api/anomaly-detection?dataset=' + encodeURIComponent(datasetName))
+                //     .then(response => response.json())
+                //     .then(data => {
+                //         anomalyData = data;
+                //         renderAnomalyData();
+                //     });
+
+                // For demo purposes, we'll use sample data
+                anomalyData = generateSampleAnomalyData();
+                renderAnomalyData();
+            }, 1500);
+        }
+
+        // Function to render anomaly data
+        function renderAnomalyData() {
+            if (!anomalyData) return;
+
+            // Update stats
+            document.getElementById('total-records').textContent = anomalyData.stats.total_records.toLocaleString();
+            document.getElementById('total-anomalies').textContent = anomalyData.stats.total_anomalies.toLocaleString();
+            document.getElementById('anomaly-rate').textContent = (anomalyData.stats.anomaly_rate * 100).toFixed(2) + '%';
+            document.getElementById('top-feature').textContent = anomalyData.stats.top_feature;
+
+            // Render feature importance
+            renderFeatureImportance();
+
+            // Render anomaly table
+            renderAnomalyTable();
+
+            // Initialize charts
+            initCharts();
+
+            // Render LLM insights
+            renderLLMInsights();
+
+            // Populate time series select
+            populateTimeSeriesSelect();
+        }
+
+        // Function to render feature importance
+        function renderFeatureImportance() {
+            const container = document.getElementById('feature-importance-container');
+            container.innerHTML = '';
+
+            anomalyData.feature_importance.forEach(feature => {
+                const row = document.createElement('div');
+                row.className = 'feature-row';
+
+                row.innerHTML = `
+                    <div class="feature-name">${feature.name}</div>
+                    <div class="feature-bar">
+                        <div class="feature-fill" style="width: ${feature.importance * 100}%"></div>
+                    </div>
+                    <div class="feature-value">${(feature.importance * 100).toFixed(1)}%</div>
+                `;
+
+                container.appendChild(row);
+            });
+        }
+
+        // Function to render anomaly table
+        function renderAnomalyTable() {
+            const tbody = document.getElementById('anomaly-table-body');
+            tbody.innerHTML = '';
+
+            // Filter anomalies based on severity
+            const severityFilter = document.getElementById('severity-filter').value;
+            let filteredAnomalies = anomalyData.anomalies;
+            
+            if (severityFilter !== 'all') {
+                filteredAnomalies = anomalyData.anomalies.filter(a => a.severity === severityFilter);
+            }
+
+            filteredAnomalies.forEach(anomaly => {
+                const row = document.createElement('tr');
+                
+                // Format features list
+                const featuresList = anomaly.features.map(f => 
+                    `<span style="display: inline-block; margin-right: 4px; margin-bottom: 4px; padding: 2px 6px; background-color: #e2e8f0; border-radius: 4px; font-size: 12px;">${f}</span>`
+                ).join('');
+
+                // Determine severity class
+                let severityClass = '';
+                if (anomaly.severity === 'high') severityClass = 'anomaly-high';
+                else if (anomaly.severity === 'medium') severityClass = 'anomaly-medium';
+                else severityClass = 'anomaly-low';
+
+                row.innerHTML = `
+                    <td>${anomaly.id}</td>
+                    <td>${new Date(anomaly.timestamp).toLocaleString()}</td>
+                    <td>${featuresList}</td>
+                    <td><span class="anomaly-badge ${severityClass}">${anomaly.severity}</span></td>
+                    <td>${anomaly.score.toFixed(3)}</td>
+                    <td>
+                        <button class="btn btn-secondary" style="padding: 4px 8px; font-size: 12px;" onclick="showAnomalyDetails(${anomaly.id})">
+                            <i class="fas fa-search"></i> Details
+                        </button>
+                    </td>
+                `;
+
+                tbody.appendChild(row);
+            });
+        }
+
+        // Function to initialize charts
+        function initCharts() {
+            // Initialize anomaly distribution chart
+            initAnomalyDistributionChart();
+
+            // Initialize multidimensional chart
+            initMultidimensionalChart();
+
+            // Initialize time series chart with the first feature
+            if (anomalyData.time_series_features.length > 0) {
+                updateTimeSeriesChart(anomalyData.time_series_features[0]);
+            }
+        }
+
+        // Function to initialize anomaly distribution chart
+        function initAnomalyDistributionChart() {
+            const chartDom = document.getElementById('anomaly-distribution-chart');
+            anomalyDistChart = echarts.init(chartDom);
+
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'shadow'
+                    }
+                },
+                legend: {
+                    data: ['Normal', 'Anomaly']
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: anomalyData.anomaly_distribution.labels
+                },
+                yAxis: {
+                    type: 'value',
+                    name: 'Count'
+                },
+                series: [
+                    {
+                        name: 'Normal',
+                        type: 'bar',
+                        stack: 'total',
+                        emphasis: {
+                            focus: 'series'
+                        },
+                        data: anomalyData.anomaly_distribution.normal_counts,
+                        itemStyle: {
+                            color: '#10B981'
+                        }
+                    },
+                    {
+                        name: 'Anomaly',
+                        type: 'bar',
+                        stack: 'total',
+                        emphasis: {
+                            focus: 'series'
+                        },
+                        data: anomalyData.anomaly_distribution.anomaly_counts,
+                        itemStyle: {
+                            color: '#EF4444'
+                        }
+                    }
+                ]
+            };
+
+            anomalyDistChart.setOption(option);
+        }
+
+        // Function to initialize multidimensional chart
+        function initMultidimensionalChart() {
+            const chartDom = document.getElementById('multidimensional-chart');
+            multiDimChart = echarts.init(chartDom);
+
+            // Prepare data for scatter plot
+            const data = anomalyData.multidimensional_data.map(item => {
+                return {
+                    value: [item.x, item.y, item.z],
+                    name: item.id,
+                    itemStyle: {
+                        color: item.is_anomaly ? '#EF4444' : '#10B981',
+                        opacity: item.is_anomaly ? 0.8 : 0.4
+                    },
+                    symbolSize: item.is_anomaly ? 10 : 6
+                };
+            });
+
+            const option = {
+                tooltip: {
+                    position: 'top',
+                    formatter: function(params) {
+                        const item = anomalyData.multidimensional_data.find(d => d.id === params.name);
+                        return `
+                            <strong>ID:</strong> ${item.id}<br/>
+                            <strong>Features:</strong> ${item.features.join(', ')}<br/>
+                            <strong>Anomaly Score:</strong> ${item.score.toFixed(3)}<br/>
+                            <strong>Status:</strong> ${item.is_anomaly ? '<span style="color:#EF4444">Anomaly</span>' : '<span style="color:#10B981">Normal</span>'}
+                        `;
+                    }
+                },
+                grid3D: {
+                    viewControl: {
+                        autoRotate: true,
+                        autoRotateSpeed: 20,
+                        distance: 120
+                    },
+                    axisPointer: {
+                        lineStyle: {
+                            color: '#fff'
+                        }
+                    }
+                },
+                xAxis3D: {
+                    name: anomalyData.multidimensional_axes.x,
+                    type: 'value'
+                },
+                yAxis3D: {
+                    name: anomalyData.multidimensional_axes.y,
+                    type: 'value'
+                },
+                zAxis3D: {
+                    name: anomalyData.multidimensional_axes.z,
+                    type: 'value'
+                },
+                series: [{
+                    type: 'scatter3D',
+                    data: data,
+                    emphasis: {
+                        itemStyle: {
+                            color: '#4F46E5',
+                            opacity: 1
+                        }
+                    }
+                }]
+            };
+
+            multiDimChart.setOption(option);
+        }
+
+        // Function to update time series chart
+        function updateTimeSeriesChart(featureName) {
+            const chartDom = document.getElementById('time-series-chart');
+            if (timeSeriesChart) {
+                echarts.dispose(chartDom);
+            }
+            timeSeriesChart = echarts.init(chartDom);
+
+            // Find the time series data for the selected feature
+            const timeSeriesData = anomalyData.time_series.find(ts => ts.feature === featureName);
+            if (!timeSeriesData) return;
+
+            // Prepare data for the chart
+            const dates = timeSeriesData.dates.map(d => new Date(d));
+            const values = timeSeriesData.values;
+            const anomalies = timeSeriesData.anomalies;
+
+            // Create series data with anomalies marked
+            const anomalySeries = [];
+            const normalSeries = [];
+            
+            dates.forEach((date, i) => {
+                const isAnomaly = anomalies[i];
+                const point = {
+                    name: date,
+                    value: [date, values[i]],
+                    itemStyle: {
+                        color: isAnomaly ? '#EF4444' : '#10B981'
+                    },
+                    symbolSize: isAnomaly ? 8 : 4
+                };
+                
+                if (isAnomaly) {
+                    anomalySeries.push(point);
+                } else {
+                    normalSeries.push(point);
+                }
+            });
+
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: function(params) {
+                        const date = new Date(params[0].value[0]);
+                        return `
+                            <strong>Date:</strong> ${date.toLocaleString()}<br/>
+                            <strong>Value:</strong> ${params[0].value[1].toFixed(2)}<br/>
+                            <strong>Status:</strong> ${params[0].seriesName === 'Anomalies' ? '<span style="color:#EF4444">Anomaly</span>' : '<span style="color:#10B981">Normal</span>'}
+                        `;
+                    }
+                },
+                legend: {
+                    data: ['Normal', 'Anomalies']
+                },
+                xAxis: {
+                    type: 'time',
+                    boundaryGap: false
+                },
+                yAxis: {
+                    type: 'value',
+                    name: featureName
+                },
+                series: [
+                    {
+                        name: 'Normal',
+                        type: 'scatter',
+                        data: normalSeries,
+                        symbolSize: function(data) {
+                            return data.symbolSize;
+                        },
+                        itemStyle: {
+                            color: '#10B981'
+                        }
+                    },
+                    {
+                        name: 'Anomalies',
+                        type: 'scatter',
+                        data: anomalySeries,
+                        symbolSize: function(data) {
+                            return data.symbolSize;
+                        },
+                        itemStyle: {
+                            color: '#EF4444'
+                        }
+                    },
+                    {
+                        name: 'Trend',
+                        type: 'line',
+                        data: dates.map((date, i) => [date, timeSeriesData.trend[i]]),
+                        smooth: true,
+                        lineStyle: {
+                            width: 2,
+                            color: '#4F46E5'
+                        },
+                        showSymbol: false
+                    }
+                ]
+            };
+
+            timeSeriesChart.setOption(option);
+        }
+
+        // Function to populate time series select
+        function populateTimeSeriesSelect() {
+            const select = document.getElementById('time-series-select');
+            select.innerHTML = '<option value="">Select feature</option>';
+            
+            anomalyData.time_series_features.forEach(feature => {
+                const option = document.createElement('option');
+                option.value = feature;
+                option.textContent = feature;
+                select.appendChild(option);
+            });
+
+            select.addEventListener('change', function() {
+                if (this.value) {
+                    updateTimeSeriesChart(this.value);
+                }
+            });
+        }
+
+        // Function to render LLM insights
+        function renderLLMInsights() {
+            const container = document.getElementById('llm-insights-container');
+            container.innerHTML = '';
+
+            anomalyData.llm_insights.forEach(insight => {
+                const card = document.createElement('div');
+                card.className = 'insight-card';
+                
+                card.innerHTML = `
+                    <div class="insight-title">
+                        <i class="fas fa-lightbulb" style="color: ${insight.severity === 'high' ? '#EF4444' : insight.severity === 'medium' ? '#F59E0B' : '#10B981'}"></i>
+                        ${insight.title}
+                    </div>
+                    <div class="insight-content">${insight.content}</div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        // Function to ask LLM a question
+        function askLLM() {
+            const question = document.getElementById('llm-question').value.trim();
+            if (!question) return;
+
+            const answerDiv = document.getElementById('llm-answer');
+            answerDiv.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
+
+            // In a real app, this would be a fetch call to your backend
+            // fetch('/api/ask-llm', {
+            //     method: 'POST',
+            //     headers: {
+            //         'Content-Type': 'application/json',
+            //     },
+            //     body: JSON.stringify({
+            //         question: question,
+            //         dataset: datasetName,
+            //         anomalies: anomalyData
+            //     })
+            // })
+            // .then(response => response.json())
+            // .then(data => {
+            //     answerDiv.innerHTML = `<p>${data.answer}</p>`;
+            // });
+
+            // For demo purposes, we'll simulate a response
+            setTimeout(() => {
+                const responses = [
+                    `Based on the anomaly detection results, ${question.toLowerCase().includes('pattern') ? 
+                    'the anomalies show a clear pattern of occurring during specific time periods, suggesting potential seasonality issues in the data.' : 
+                    'the most significant anomalies are related to unexpected spikes in values that deviate from the normal distribution.'}`,
+                    
+                    `The LLM analysis indicates that ${question.toLowerCase().includes('cause') ? 
+                    'the root cause of these anomalies might be related to data collection errors during system maintenance windows.' : 
+                    'these anomalies represent statistically significant deviations that warrant further investigation.'}`,
+                    
+                    `Our AI model suggests that ${question.toLowerCase().includes('impact') ? 
+                    'these anomalies could impact data quality by up to 15% if not addressed, particularly in the feature engineering pipeline.' : 
+                    'the anomalies detected are consistent with known data quality issues in similar datasets.'}`
+                ];
+                
+                const randomResponse = responses[Math.floor(Math.random() * responses.length)];
+                answerDiv.innerHTML = `<p>${randomResponse}</p>`;
+            }, 2000);
+        }
+
+        // Function to show anomaly details
+        function showAnomalyDetails(anomalyId) {
+            const anomaly = anomalyData.anomalies.find(a => a.id === anomalyId);
+            if (!anomaly) return;
+
+            // In a real app, this would open a modal with detailed information
+            alert(`Anomaly Details:\n\nID: ${anomaly.id}\nTimestamp: ${new Date(anomaly.timestamp).toLocaleString()}\nFeatures: ${anomaly.features.join(', ')}\nSeverity: ${anomaly.severity}\nScore: ${anomaly.score.toFixed(3)}\nDescription: ${anomaly.description}`);
+        }
+
+        // Function to export anomaly report
+        function exportAnomalyReport() {
+            // In a real app, this would generate a PDF or CSV report
+            alert('Exporting anomaly report...');
+        }
+
+        // Function to switch tabs
+        function switchTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Deactivate all tab buttons
+            document.querySelectorAll('.tabs .tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // Show selected tab
+            document.getElementById(`${tabId}-tab`).classList.add('active');
+
+            // Activate selected tab button
+            document.querySelector(`.tabs .tab[onclick="switchTab('${tabId}')"]`).classList.add('active');
+
+            // Resize charts when tab becomes visible
+            setTimeout(() => {
+                if (tabId === 'visualization') {
+                    if (multiDimChart) multiDimChart.resize();
+                    if (timeSeriesChart) timeSeriesChart.resize();
+                } else if (tabId === 'overview') {
+                    if (anomalyDistChart) anomalyDistChart.resize();
+                }
+            }, 100);
+        }
+
+        // Function to generate sample anomaly data
+        function generateSampleAnomalyData() {
+            // Generate random timestamps for the last 30 days
+            const now = new Date();
+            const startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+            
+            const generateTimestamps = (count) => {
+                return Array.from({length: count}, () => {
+                    const randomTime = startDate.getTime() + Math.random() * (now.getTime() - startDate.getTime());
+                    return new Date(randomTime);
+                }).sort((a, b) => a - b);
+            };
+            
+            // Generate sample time series data
+            const timeSeriesFeatures = ['Sales', 'Temperature', 'CPU_Usage', 'Memory_Usage', 'Network_Traffic'];
+            const timeSeriesData = timeSeriesFeatures.map(feature => {
+                const count = 100;
+                const dates = generateTimestamps(count);
+                const baseValues = Array.from({length: count}, (_, i) => {
+                    // Base value with some seasonality
+                    const seasonality = Math.sin(i / 10) * 20;
+                    const trend = i * 0.5;
+                    return 50 + seasonality + trend + (Math.random() * 10 - 5);
+                });
+                
+                // Add some anomalies
+                const anomalies = Array(count).fill(0);
+                const anomalyIndices = new Set();
+                const anomalyCount = Math.floor(count * 0.1); // 10% anomalies
+                
+                while (anomalyIndices.size < anomalyCount) {
+                    const idx = Math.floor(Math.random() * count);
+                    if (!anomalyIndices.has(idx)) {
+                        anomalyIndices.add(idx);
+                        anomalies[idx] = 1;
+                        // Make the value an anomaly
+                        baseValues[idx] += (Math.random() > 0.5 ? 1 : -1) * (30 + Math.random() * 50);
+                    }
+                }
+                
+                // Calculate trend (simple moving average)
+                const trend = baseValues.map((_, i) => {
+                    const windowSize = 5;
+                    const start = Math.max(0, i - windowSize);
+                    const end = Math.min(count, i + windowSize);
+                    const window = baseValues.slice(start, end);
+                    return window.reduce((sum, val) => sum + val, 0) / window.length;
+                });
+                
+                return {
+                    feature: feature,
+                    dates: dates.map(d => d.toISOString()),
+                    values: baseValues,
+                    anomalies: anomalies,
+                    trend: trend
+                };
+            });
+            
+            // Generate sample anomalies
+            const anomalies = Array.from({length: 50}, (_, i) => {
+                const severity = Math.random() > 0.7 ? 'high' : Math.random() > 0.4 ? 'medium' : 'low';
+                const featureCount = 1 + Math.floor(Math.random() * 3);
+                const features = [];
+                
+                for (let j = 0; j < featureCount; j++) {
+                    const randomFeature = timeSeriesFeatures[Math.floor(Math.random() * timeSeriesFeatures.length)];
+                    if (!features.includes(randomFeature)) {
+                        features.push(randomFeature);
+                    }
+                }
+                
+                return {
+                    id: i + 1,
+                    timestamp: generateTimestamps(1)[0].toISOString(),
+                    features: features,
+                    severity: severity,
+                    score: 0.7 + Math.random() * 0.3, // Score between 0.7-1.0
+                    description: `Unusual pattern detected in ${features.join(', ')} with ${severity} impact`
+                };
+            });
+            
+            // Generate feature importance
+            const featureImportance = timeSeriesFeatures.map(feature => ({
+                name: feature,
+                importance: 0.1 + Math.random() * 0.9 // Random importance between 0.1-1.0
+            })).sort((a, b) => b.importance - a.importance);
+            
+            // Normalize importance to sum to 1
+            const totalImportance = featureImportance.reduce((sum, f) => sum + f.importance, 0);
+            featureImportance.forEach(f => f.importance /= totalImportance);
+            
+            // Generate multidimensional data
+            const multidimensionalData = Array.from({length: 200}, (_, i) => {
+                const isAnomaly = i % 20 === 0; // 5% anomalies
+                return {
+                    id: `P${i + 1}`,
+                    x: 50 + Math.random() * 50 + (isAnomaly ? (Math.random() > 0.5 ? 30 : -30) : 0),
+                    y: 30 + Math.random() * 40 + (isAnomaly ? (Math.random() > 0.5 ? 25 : -25) : 0),
+                    z: 20 + Math.random() * 60 + (isAnomaly ? (Math.random() > 0.5 ? 40 : -40) : 0),
+                    features: [timeSeriesFeatures[Math.floor(Math.random() * timeSeriesFeatures.length)]],
+                    score: isAnomaly ? 0.7 + Math.random() * 0.3 : Math.random() * 0.3,
+                    is_anomaly: isAnomaly
+                };
+            });
+            
+            // Generate anomaly distribution
+            const anomalyDistribution = {
+                labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                normal_counts: [120, 95, 150, 180, 130, 90],
+                anomaly_counts: [5, 8, 3, 12, 7, 4]
+            };
+            
+            // Generate LLM insights
+            const llmInsights = [
+                {
+                    title: "Seasonal Pattern Detected",
+                    content: "The anomalies show a clear pattern of occurring during specific time periods, suggesting potential seasonality issues in the data collection process.",
+                    severity: "high"
+                },
+                {
+                    title: "Data Quality Concern",
+                    content: "Multiple anomalies are clustered around system maintenance windows, indicating possible data collection interruptions during these periods.",
+                    severity: "medium"
+                },
+                {
+                    title: "Feature Correlation",
+                    content: "Anomalies in the 'CPU_Usage' feature frequently co-occur with anomalies in 'Temperature', suggesting a possible relationship between these metrics.",
+                    severity: "low"
+                }
+            ];
+            
+            return {
+                stats: {
+                    total_records: 1000,
+                    total_anomalies: anomalies.length,
+                    anomaly_rate: anomalies.length / 1000,
+                    top_feature: featureImportance[0].name
+                },
+                feature_importance: featureImportance,
+                anomalies: anomalies,
+                time_series_features: timeSeriesFeatures,
+                time_series: timeSeriesData,
+                multidimensional_data: multidimensionalData,
+                multidimensional_axes: {
+                    x: 'Feature 1',
+                    y: 'Feature 2',
+                    z: 'Feature 3'
+                },
+                anomaly_distribution: anomalyDistribution,
+                llm_insights: llmInsights
+            };
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            if (timeSeriesChart) timeSeriesChart.resize();
+            if (multiDimChart) multiDimChart.resize();
+            if (anomalyDistChart) anomalyDistChart.resize();
+        });
+    </script>
+</body>
+</html>

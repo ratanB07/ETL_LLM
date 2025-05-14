@@ -1,0 +1,2172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GENFLOW - AI Copilot for Data Exploration & Prep</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #6366f1;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: var(--dark);
+            min-height: 100vh;
+        }
+
+        /* Header styles */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            background-color: black;
+            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 22px;
+            letter-spacing: 0.5px;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-profile {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .user-profile:hover {
+            background-color: rgba(255, 255, 255, 0.3);
+        }
+
+        /* Main container */
+        .main-container {
+            display: flex;
+            min-height: calc(100vh - 60px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background-color: white;
+            border-right: 1px solid var(--gray-light);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            margin-bottom: 25px;
+        }
+
+        .sidebar-title {
+            font-size: 13px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--gray);
+            margin-bottom: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            color: var(--dark);
+            border-radius: 6px;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-item:hover {
+            background-color: var(--gray-light);
+        }
+
+        .sidebar-item.active {
+            background-color: rgba(79, 70, 229, 0.1);
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .sidebar-item i {
+            margin-right: 10px;
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
+
+        /* Main content */
+        .main-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background-color: #f8fafc;
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .content-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .content-subtitle {
+            font-size: 14px;
+            color: var(--gray);
+            margin-top: 5px;
+        }
+
+        /* AI Copilot Chat */
+        .copilot-container {
+            display: flex;
+            height: calc(100vh - 180px);
+            gap: 20px;
+        }
+
+        .copilot-chat {
+            flex: 1;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .chat-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray-light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .chat-header i {
+            font-size: 20px;
+            color: var(--primary);
+        }
+
+        .chat-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .message {
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .message-user {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+        }
+
+        .message-bot {
+            display: flex;
+            justify-content: flex-start;
+            margin-bottom: 10px;
+        }
+
+        .message-content {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .user-message {
+            background-color: var(--primary);
+            color: white;
+            border-top-right-radius: 4px;
+        }
+
+        .bot-message {
+            background-color: var(--gray-light);
+            color: var(--dark);
+            border-top-left-radius: 4px;
+        }
+
+        .message-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .user-avatar {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .bot-avatar {
+            background-color: var(--gray-light);
+            color: var(--dark);
+        }
+
+        .chat-input-container {
+            padding: 15px 20px;
+            border-top: 1px solid var(--gray-light);
+            display: flex;
+            gap: 10px;
+        }
+
+        .chat-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 1px solid var(--gray-light);
+            border-radius: 24px;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .chat-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+        }
+
+        .send-button {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .send-button:hover {
+            background-color: var(--primary-dark);
+            transform: scale(1.05);
+        }
+
+        .send-button:disabled {
+            background-color: var(--gray-light);
+            cursor: not-allowed;
+        }
+
+        /* Data Insights Panel */
+        .insights-panel {
+            width: 350px;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .insights-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray-light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .insights-header i {
+            font-size: 20px;
+            color: var(--primary);
+        }
+
+        .insights-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .insights-content {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .insight-card {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .insight-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--dark);
+        }
+
+        .insight-text {
+            font-size: 14px;
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        .insight-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .insight-button {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: none;
+        }
+
+        .insight-button-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+
+        .insight-button-secondary {
+            background-color: white;
+            color: var(--primary);
+            border: 1px solid var(--gray-light);
+        }
+
+        /* Data Visualization */
+        .chart-container {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .chart-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .chart-wrapper {
+            height: 300px;
+        }
+
+        /* Suggestions */
+        .suggestions-container {
+            margin-top: 20px;
+        }
+
+        .suggestion-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            background-color: white;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .suggestion-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .suggestion-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background-color: var(--gray-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            color: var(--primary);
+            flex-shrink: 0;
+        }
+
+        .suggestion-text {
+            flex: 1;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Typing indicator */
+        .typing-indicator {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: var(--gray-light);
+            border-radius: 20px;
+            width: fit-content;
+            margin-bottom: 20px;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--gray);
+            border-radius: 50%;
+            margin: 0 3px;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        /* Code snippets */
+        .code-snippet {
+            background-color: #1e293b;
+            color: #f8fafc;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+
+        .code-keyword {
+            color: #f472b6;
+        }
+
+        .code-function {
+            color: #60a5fa;
+        }
+
+        .code-string {
+            color: #34d399;
+        }
+
+        .code-comment {
+            color: #94a3b8;
+            font-style: italic;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-5px); }
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .copilot-container {
+                flex-direction: column;
+                height: auto;
+            }
+            
+            .insights-panel {
+                width: 100%;
+                margin-top: 20px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+                border-right: none;
+                border-bottom: 1px solid var(--gray-light);
+            }
+        }
+        /* Add to your existing styles */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 14px;
+        }
+        
+        .data-table th, .data-table td {
+            padding: 10px;
+            border: 1px solid var(--gray-light);
+            text-align: left;
+        }
+        
+        .data-table th {
+            background-color: var(--primary);
+            color: white;
+            font-weight: 500;
+        }
+        
+        .data-table tr:nth-child(even) {
+            background-color: rgba(79, 70, 229, 0.05);
+        }
+        
+        .data-table tr:hover {
+            background-color: rgba(79, 70, 229, 0.1);
+        }
+        
+        .command-chip {
+            display: inline-block;
+            background-color: var(--gray-light);
+            padding: 4px 10px;
+            border-radius: 20px;
+            margin: 5px 5px 5px 0;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .command-chip:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .quick-commands {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 10px 0;
+            gap: 8px;
+        }
+        
+        .quick-command {
+            background-color: var(--gray-light);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .quick-command:hover {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .data-preview {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--gray-light);
+            border-radius: 8px;
+            margin: 15px 0;
+            padding: 10px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .action-button {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s;
+        }
+        
+        .action-button-primary {
+            background-color: var(--primary);
+            color: white;
+        }
+        
+        .action-button-secondary {
+            background-color: white;
+            color: var(--primary);
+            border: 1px solid var(--gray-light);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon">G</div>
+            <div class="logo-text">GENFLOW</div>
+        </div>
+        <div class="header-actions">
+            <div class="user-profile">
+                <i class="fas fa-user"></i>
+            </div>
+        </div>
+    </div>
+    
+
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">
+                    <i class="fas fa-database"></i>
+                    Dataset
+                </div>
+                <div class="sidebar-item active">
+                    <i class="fas fa-table"></i>
+                    <span id="dataset-name">Loading...</span>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">
+                    <i class="fas fa-chart-bar"></i>
+                    Quick Analysis
+                </div>
+                <div class="sidebar-item">
+                    <i class="fas fa-info-circle"></i>
+                    Dataset Overview
+                </div>
+                <div class="sidebar-item">
+                    <i class="fas fa-search"></i>
+                    Data Quality Check
+                </div>
+                <div class="sidebar-item">
+                    <i class="fas fa-chart-pie"></i>
+                    Column Distribution
+                </div>
+                <div class="sidebar-item">
+                    <i class="fas fa-link"></i>
+                    Correlation Analysis
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">
+                    <i class="fas fa-magic"></i>
+                    AI Suggestions
+                </div>
+                <div class="sidebar-item">
+                    <i class="fas fa-filter"></i>
+                    Cleaning Suggestions
+                </div>
+                <div class="sidebar-item">
+                    <i class="fas fa-project-diagram"></i>
+                    Feature Engineering
+                </div>
+                <div class="sidebar-item">
+                    <i class="fas fa-chart-line"></i>
+                    Visualization Ideas
+                </div>
+                <div class="sidebar-item">
+                    <i class="fas fa-robot"></i>
+                    ML Model Suggestions
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">
+                    <i class="fas fa-history"></i>
+                    Recent Actions
+                </div>
+                <div class="sidebar-item">
+                    <i class="fas fa-clock"></i>
+                    No recent actions
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="content-header">
+                <div>
+                    <h1 class="content-title">
+                        <i class="fas fa-robot"></i>
+                        AI Copilot for Data Exploration & Prep
+                    </h1>
+                    <p class="content-subtitle">Powered by advanced LLMs to assist with your ETL workflows</p>
+                </div>
+            </div>
+
+            <div class="copilot-container">
+                <div class="copilot-chat">
+                    <div class="chat-header">
+                        <i class="fas fa-comments"></i>
+                        <h3>AI Data Assistant</h3>
+                    </div>
+                    <div class="chat-messages" id="chat-messages">
+                        <div class="message">
+                            <div class="message-bot">
+                                <div class="message-avatar bot-avatar">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                                <div class="message-content bot-message">
+                                    <p>Hello! I'm your AI Data Assistant. I can help you explore, clean, and prepare your dataset for analysis.</p>
+                                    <p>What would you like to know about your data?</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-input-container">
+                        <input type="text" class="chat-input" id="chat-input" placeholder="Ask me anything about your data...">
+                        <button class="send-button" id="send-button">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="insights-panel">
+                    <div class="insights-header">
+                        <i class="fas fa-lightbulb"></i>
+                        <h3>Data Insights & Suggestions</h3>
+                    </div>
+                    <div class="insights-content" id="insights-content">
+                        <div class="insight-card">
+                            <div class="insight-title">Dataset Overview</div>
+                            <div class="insight-text" id="dataset-overview">
+                                Analyzing your dataset... <div class="typing-indicator">
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="insight-card">
+                            <div class="insight-title">Data Quality Issues</div>
+                            <div class="insight-text" id="data-quality">
+                                Checking for data quality issues... <div class="typing-indicator">
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                </div>
+                            </div>
+                            <div class="insight-actions" id="quality-actions" style="display: none;">
+                                <button class="insight-button insight-button-primary">View Details</button>
+                                <button class="insight-button insight-button-secondary">Fix Automatically</button>
+                            </div>
+                        </div>
+
+                        <div class="insight-card">
+                            <div class="insight-title">Feature Engineering</div>
+                            <div class="insight-text" id="feature-engineering">
+                                Generating feature engineering ideas... <div class="typing-indicator">
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                    <div class="typing-dot"></div>
+                                </div>
+                            </div>
+                            <div class="insight-actions" id="feature-actions" style="display: none;">
+                                <button class="insight-button insight-button-primary">Apply Suggestions</button>
+                            </div>
+                        </div>
+
+                        <div class="chart-container">
+                            <div class="chart-header">
+                                <div class="chart-title">Column Distribution</div>
+                            </div>
+                            <div class="chart-wrapper" id="column-chart"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="suggestions-container">
+                <h3 style="font-size: 16px; font-weight: 600; color: var(--dark); margin-bottom: 15px;">
+                    <i class="fas fa-bolt" style="margin-right: 8px;"></i>
+                    Quick Actions
+                </h3>
+                
+                <div class="suggestion-item" id="clean-data-btn">
+                    <div class="suggestion-icon">
+                        <i class="fas fa-broom"></i>
+                    </div>
+                    <div class="suggestion-text">Clean and preprocess my data</div>
+                    <i class="fas fa-chevron-right" style="color: var(--gray);"></i>
+                </div>
+                
+                <div class="suggestion-item" id="analyze-trends-btn">
+                    <div class="suggestion-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="suggestion-text">Analyze trends and patterns</div>
+                    <i class="fas fa-chevron-right" style="color: var(--gray);"></i>
+                </div>
+                
+                <div class="suggestion-item" id="feature-suggestions-btn">
+                    <div class="suggestion-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <div class="suggestion-text">Suggest feature engineering</div>
+                    <i class="fas fa-chevron-right" style="color: var(--gray);"></i>
+                </div>
+                
+                <div class="suggestion-item" id="ml-suggestions-btn">
+                    <div class="suggestion-icon">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <div class="suggestion-text">Recommend ML models</div>
+                    <i class="fas fa-chevron-right" style="color: var(--gray);"></i>
+                </div>
+                <!-- Keep your existing header and sidebar -->
+    
+    <div class="main-content">
+        <div class="content-header">
+            <div>
+                <h1 class="content-title">
+                    <i class="fas fa-robot"></i>
+                    AI Copilot for Data Exploration & Prep
+                </h1>
+                <p class="content-subtitle" id="dataset-subtitle">Analyzing dataset: <span id="current-dataset">None loaded</span></p>
+            </div>
+            <div class="action-buttons">
+                <button class="action-button action-button-primary" id="upload-data-btn">
+                    <i class="fas fa-upload"></i> Upload Dataset
+                </button>
+                <button class="action-button action-button-secondary" id="download-data-btn">
+                    <i class="fas fa-download"></i> Download
+                </button>
+            </div>
+        </div>
+
+        <div class="copilot-container">
+            <div class="copilot-chat">
+                <div class="chat-header">
+                    <i class="fas fa-comments"></i>
+                    <h3>AI Data Assistant</h3>
+                </div>
+                <div class="chat-messages" id="chat-messages">
+                    <div class="message">
+                        <div class="message-bot">
+                            <div class="message-avatar bot-avatar">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div class="message-content bot-message">
+                                <p>Hello! I'm your AI Data Assistant. I can help you explore, clean, and prepare your dataset for analysis.</p>
+                                <p>Upload a dataset to get started or ask me anything about data analysis!</p>
+                                
+                                <div class="quick-commands">
+                                    <div class="quick-command" data-command="show summary">Show dataset summary</div>
+                                    <div class="quick-command" data-command="how many rows">Count rows</div>
+                                    <div class="quick-command" data-command="how many columns">Count columns</div>
+                                    <div class="quick-command" data-command="show first 5 rows">Show sample data</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chat-input-container">
+                    <input type="text" class="chat-input" id="chat-input" placeholder="Ask me anything about your data...">
+                    <button class="send-button" id="send-button">
+                        <i class="fas fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="insights-panel">
+                <div class="insights-header">
+                    <i class="fas fa-lightbulb"></i>
+                    <h3>Data Insights & Suggestions</h3>
+                </div>
+                <div class="insights-content" id="insights-content">
+                    <div class="insight-card">
+                        <div class="insight-title">Dataset Overview</div>
+                        <div class="insight-text" id="dataset-overview">
+                            No dataset loaded. Upload a file to begin analysis.
+                        </div>
+                    </div>
+
+                    <div class="insight-card">
+                        <div class="insight-title">Data Quality Issues</div>
+                        <div class="insight-text" id="data-quality">
+                            No dataset loaded.
+                        </div>
+                        <div class="insight-actions" id="quality-actions" style="display: none;">
+                            <button class="insight-button insight-button-primary" id="view-quality-btn">View Details</button>
+                            <button class="insight-button insight-button-secondary" id="fix-quality-btn">Fix Automatically</button>
+                        </div>
+                    </div>
+
+                    <div class="insight-card">
+                        <div class="insight-title">Feature Engineering</div>
+                        <div class="insight-text" id="feature-engineering">
+                            No dataset loaded.
+                        </div>
+                        <div class="insight-actions" id="feature-actions" style="display: none;">
+                            <button class="insight-button insight-button-primary" id="apply-features-btn">Apply Suggestions</button>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <div class="chart-header">
+                            <div class="chart-title">Column Distribution</div>
+                        </div>
+                        <div class="chart-wrapper" id="column-chart"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="suggestions-container">
+            <h3 style="font-size: 16px; font-weight: 600; color: var(--dark); margin-bottom: 15px;">
+                <i class="fas fa-bolt" style="margin-right: 8px;"></i>
+                Quick Actions
+            </h3>
+            
+            <div class="suggestion-item" id="clean-data-btn">
+                <div class="suggestion-icon">
+                    <i class="fas fa-broom"></i>
+                </div>
+                <div class="suggestion-text">Clean and preprocess my data</div>
+                <i class="fas fa-chevron-right" style="color: var(--gray);"></i>
+            </div>
+            
+            <div class="suggestion-item" id="analyze-trends-btn">
+                <div class="suggestion-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="suggestion-text">Analyze trends and patterns</div>
+                <i class="fas fa-chevron-right" style="color: var(--gray);"></i>
+            </div>
+            
+            <div class="suggestion-item" id="feature-suggestions-btn">
+                <div class="suggestion-icon">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                <div class="suggestion-text">Suggest feature engineering</div>
+                <i class="fas fa-chevron-right" style="color: var(--gray);"></i>
+            </div>
+            
+            <div class="suggestion-item" id="ml-suggestions-btn">
+                <div class="suggestion-icon">
+                    <i class="fas fa-brain"></i>
+                </div>
+                <div class="suggestion-text">Recommend ML models</div>
+                <i class="fas fa-chevron-right" style="color: var(--gray);"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden file input for uploads -->
+    <input type="file" id="file-upload" style="display: none;" accept=".csv,.xlsx,.xls,.json">
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentDataset = null;
+        let currentFilename = null;
+        let currentColumns = [];
+        let currentData = [];
+        
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check for dataset in URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('filename')) {
+                loadDatasetFromURL(urlParams.get('filename'));
+            }
+            
+            // Set up event listeners
+            setupEventListeners();
+        });
+        
+        function setupEventListeners() {
+            // Chat functionality
+            document.getElementById('send-button').addEventListener('click', sendMessage);
+            document.getElementById('chat-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') sendMessage();
+            });
+            
+            // Quick commands
+            document.querySelectorAll('.quick-command').forEach(button => {
+                button.addEventListener('click', function() {
+                    const command = this.getAttribute('data-command');
+                    document.getElementById('chat-input').value = command;
+                    sendMessage();
+                });
+            });
+            
+            // Upload button
+            document.getElementById('upload-data-btn').addEventListener('click', () => {
+                document.getElementById('file-upload').click();
+            });
+            
+            // File upload handler
+            document.getElementById('file-upload').addEventListener('change', handleFileUpload);
+            
+            // Download button
+            document.getElementById('download-data-btn').addEventListener('click', downloadDataset);
+            
+            // Quick action buttons
+            document.getElementById('clean-data-btn').addEventListener('click', () => {
+                if (!currentDataset) {
+                    alert('Please upload a dataset first');
+                    return;
+                }
+                addUserMessage("Clean and preprocess my data");
+                simulateTyping(() => {
+                    analyzeDataQuality();
+                });
+            });
+            
+            document.getElementById('analyze-trends-btn').addEventListener('click', () => {
+                if (!currentDataset) {
+                    alert('Please upload a dataset first');
+                    return;
+                }
+                addUserMessage("Analyze trends in my data");
+                simulateTyping(() => {
+                    analyzeTrends();
+                });
+            });
+            
+            document.getElementById('feature-suggestions-btn').addEventListener('click', () => {
+                if (!currentDataset) {
+                    alert('Please upload a dataset first');
+                    return;
+                }
+                addUserMessage("Suggest feature engineering ideas");
+                simulateTyping(() => {
+                    suggestFeatureEngineering();
+                });
+            });
+            
+            document.getElementById('ml-suggestions-btn').addEventListener('click', () => {
+                if (!currentDataset) {
+                    alert('Please upload a dataset first');
+                    return;
+                }
+                addUserMessage("Recommend machine learning models");
+                simulateTyping(() => {
+                    suggestMLModels();
+                });
+            });
+            
+            // Insight action buttons
+            document.getElementById('view-quality-btn').addEventListener('click', () => {
+                addUserMessage("Show me the data quality issues");
+                simulateTyping(() => {
+                    analyzeDataQuality();
+                });
+            });
+            
+            document.getElementById('fix-quality-btn').addEventListener('click', () => {
+                addUserMessage("Fix all data quality issues automatically");
+                fixDataQuality();
+            });
+            
+            document.getElementById('apply-features-btn').addEventListener('click', () => {
+                addUserMessage("Apply all feature engineering suggestions");
+                applyFeatureEngineering();
+            });
+        }
+        
+        function loadDatasetFromURL(filename) {
+            showLoading("Loading dataset...");
+            
+            fetch(`/get-data?filename=${encodeURIComponent(filename)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    currentDataset = data.sample_data;
+                    currentColumns = data.columns;
+                    currentFilename = filename;
+                    
+                    updateDatasetInfo(filename, data.sample_data.length, data.columns.length);
+                    
+                    // Initialize the chatbot with this dataset
+                    initializeChatbot(filename);
+                    
+                    // Analyze the dataset
+                    analyzeDataset();
+                })
+                .catch(error => {
+                    addBotMessage(`Error loading dataset: ${error.message}`);
+                })
+                .finally(() => {
+                    hideLoading();
+                });
+        }
+        
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            showLoading(`Uploading ${file.name}...`);
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            fetch('/upload-excel', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                currentDataset = data.sample_data;
+                currentColumns = data.columns;
+                currentFilename = data.filename;
+                
+                updateDatasetInfo(data.filename, data.sample_data.length, data.columns.length);
+                
+                // Initialize the chatbot with this dataset
+                initializeChatbot(data.filename);
+                
+                // Analyze the dataset
+                analyzeDataset();
+                
+                // Update URL without reload
+                const newUrl = new URL(window.location);
+                newUrl.searchParams.set('filename', data.filename);
+                window.history.pushState({}, '', newUrl);
+            })
+            .catch(error => {
+                addBotMessage(`Error uploading file: ${error.message}`);
+            })
+            .finally(() => {
+                hideLoading();
+                event.target.value = ''; // Reset file input
+            });
+        }
+        
+        function downloadDataset() {
+            if (!currentFilename) {
+                alert('No dataset to download');
+                return;
+            }
+            
+            window.open(`/download?filename=${encodeURIComponent(currentFilename)}`, '_blank');
+        }
+        
+        function updateDatasetInfo(filename, rowCount, colCount) {
+            document.getElementById('current-dataset').textContent = filename;
+            document.getElementById('dataset-subtitle').textContent = 
+                `Analyzing dataset: ${filename} (${rowCount} rows, ${colCount} columns)`;
+            
+            // Update sidebar
+            document.getElementById('dataset-name').textContent = filename;
+        }
+        
+        function initializeChatbot(filename) {
+            fetch('/chatbot/initialize', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    filename: filename
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    addBotMessage(`Dataset "${filename}" loaded successfully with ${data.stats.rows} rows and ${data.stats.columns} columns.`);
+                    
+                    // Update insights panel
+                    updateInsightsPanel(data.insights, data.stats);
+                    
+                    // Show sample data
+                    if (data.preview && data.preview.length > 0) {
+                        showDataPreview(data.preview, data.columns);
+                    }
+                } else {
+                    addBotMessage(`Error initializing chatbot: ${data.message}`);
+                }
+            })
+            .catch(error => {
+                addBotMessage(`Error connecting to server: ${error.message}`);
+            });
+        }
+        
+        function analyzeDataset() {
+            fetch('/analyze-data-quality', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    filename: currentFilename
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    updateInsightsPanelFromAnalysis(data.stats);
+                    createColumnDistributionChart(data.stats.columns);
+                }
+            })
+            .catch(error => {
+                console.error('Error analyzing dataset:', error);
+            });
+        }
+        
+        function updateInsightsPanel(insights, stats) {
+            // Update dataset overview
+            const overviewElement = document.getElementById('dataset-overview');
+            overviewElement.innerHTML = `
+                <p>Dataset contains:</p>
+                <ul>
+                    <li>${stats.rows} rows</li>
+                    <li>${stats.columns} columns</li>
+                    <li>${stats.numeric_cols.length} numeric columns</li>
+                    <li>${stats.categorical_cols.length} categorical columns</li>
+                </ul>
+            `;
+            
+            // Update data quality issues
+            const qualityElement = document.getElementById('data-quality');
+            if (insights.data_quality && insights.data_quality.length > 0) {
+                let qualityHTML = '<p>Potential issues found:</p><ul>';
+                insights.data_quality.forEach(issue => {
+                    qualityHTML += `<li>${issue.message}</li>`;
+                });
+                qualityHTML += '</ul>';
+                qualityElement.innerHTML = qualityHTML;
+                document.getElementById('quality-actions').style.display = 'flex';
+            } else {
+                qualityElement.innerHTML = '<p>No major data quality issues found</p>';
+                document.getElementById('quality-actions').style.display = 'none';
+            }
+            
+            // Update feature engineering suggestions
+            const featureElement = document.getElementById('feature-engineering');
+            if (insights.feature_suggestions && insights.feature_suggestions.length > 0) {
+                let featureHTML = '<p>Suggested feature engineering:</p><ul>';
+                insights.feature_suggestions.forEach(suggestion => {
+                    featureHTML += `<li>${suggestion.message}</li>`;
+                });
+                featureHTML += '</ul>';
+                featureElement.innerHTML = featureHTML;
+                document.getElementById('feature-actions').style.display = 'flex';
+            } else {
+                featureElement.innerHTML = '<p>No feature engineering suggestions yet</p>';
+                document.getElementById('feature-actions').style.display = 'none';
+            }
+        }
+        
+        function updateInsightsPanelFromAnalysis(stats) {
+            // This would update the insights panel with more detailed analysis
+            // Implementation would depend on your specific analysis results
+        }
+        
+        function createColumnDistributionChart(columns) {
+            // Process column data for the chart
+            const numericCols = columns.filter(col => col.numeric).length;
+            const categoricalCols = columns.filter(col => col.type === 'object').length;
+            const dateCols = columns.filter(col => col.type.includes('datetime')).length;
+            
+            const options = {
+                series: [numericCols, categoricalCols, dateCols],
+                chart: {
+                    type: 'donut',
+                    height: '100%'
+                },
+                labels: ['Numeric', 'Categorical', 'Date'],
+                colors: [var(--primary), var(--secondary), var(--info)],
+                responsive: [{
+                    breakpoint: 480,
+                    options: {
+                        chart: {
+                            width: 200
+                        },
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }]
+            };
+            
+            const chart = new ApexCharts(document.querySelector("#column-chart"), options);
+            chart.render();
+        }
+        
+        function showDataPreview(data, columns) {
+            // Create a table with the data preview
+            let tableHTML = '<table class="data-table"><thead><tr>';
+            
+            // Add headers
+            columns.forEach(col => {
+                tableHTML += `<th>${col}</th>`;
+            });
+            tableHTML += '</tr></thead><tbody>';
+            
+            // Add data rows
+            data.forEach(row => {
+                tableHTML += '<tr>';
+                columns.forEach(col => {
+                    tableHTML += `<td>${row[col] !== null ? row[col] : '<span style="color:var(--danger)">NULL</span>'}</td>`;
+                });
+                tableHTML += '</tr>';
+            });
+            
+            tableHTML += '</tbody></table>';
+            
+            addBotMessage(`
+                <p>Here's a preview of your data:</p>
+                <div class="data-preview">${tableHTML}</div>
+                <p>What would you like to explore first?</p>
+            `);
+        }
+        
+        function analyzeDataQuality() {
+            if (!currentDataset) return;
+            
+            fetch('/analyze-data-quality', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    filename: currentFilename
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    let message = '<p><strong>Data Quality Analysis:</strong></p><ul>';
+                    
+                    // Add summary stats
+                    message += `<li>Total rows: ${data.stats.total_rows}</li>`;
+                    message += `<li>Total columns: ${data.stats.total_columns}</li>`;
+                    message += `<li>Duplicate rows: ${data.stats.duplicate_rows}</li>`;
+                    
+                    // Add column-specific issues
+                    message += '</ul><p><strong>Column Issues:</strong></p><ul>';
+                    for (const [col, stats] of Object.entries(data.stats.columns)) {
+                        if (stats.missing > 0 || stats.outliers > 0) {
+                            message += `<li><strong>${col}</strong>: ${stats.missing} missing, ${stats.outliers || 0} outliers</li>`;
+                        }
+                    }
+                    
+                    message += '</ul><p>Would you like me to fix these issues?</p>';
+                    
+                    addBotMessage(message);
+                }
+            })
+            .catch(error => {
+                addBotMessage(`Error analyzing data quality: ${error.message}`);
+            });
+        }
+        
+        function fixDataQuality() {
+            if (!currentFilename) return;
+            
+            showLoading("Fixing data quality issues...");
+            
+            // This would send commands to fix all identified issues
+            const commands = [
+                "drop nulls",
+                "remove duplicates",
+                "clean all columns"
+            ];
+            
+            // Execute each command sequentially
+            executeCommandsSequentially(commands)
+                .then(() => {
+                    addBotMessage("All data quality issues have been fixed successfully!");
+                    // Refresh the data
+                    return fetch(`/get-data?filename=${encodeURIComponent(currentFilename)}`);
+                })
+                .then(response => response.json())
+                .then(data => {
+                    currentDataset = data.sample_data;
+                    showDataPreview(data.sample_data, data.columns);
+                })
+                .catch(error => {
+                    addBotMessage(`Error fixing data quality: ${error.message}`);
+                })
+                .finally(() => {
+                    hideLoading();
+                });
+        }
+        
+        function analyzeTrends() {
+            if (!currentDataset) return;
+            
+            // Identify numeric columns for trend analysis
+            const numericColumns = currentColumns.filter(col => {
+                return typeof currentDataset[0][col] === 'number';
+            });
+            
+            if (numericColumns.length === 0) {
+                addBotMessage("No numeric columns found for trend analysis.");
+                return;
+            }
+            
+            // Create a trend chart
+            addBotMessage(`
+                <p><strong>Trend Analysis:</strong></p>
+                <p>Analyzing trends in numeric columns: ${numericColumns.join(', ')}</p>
+                <div class="chart-container" style="margin-top: 15px;">
+                    <div class="chart-wrapper" id="trend-chart" style="height: 250px;"></div>
+                </div>
+            `);
+            
+            // Generate sample trend data (in a real app, this would use actual data)
+            createTrendChart(numericColumns);
+        }
+        
+        function suggestFeatureEngineering() {
+            if (!currentDataset) return;
+            
+            // Get feature suggestions from backend
+            fetch('/chatbot/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: "suggest feature engineering"
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    addBotMessage(data.message);
+                }
+            })
+            .catch(error => {
+                addBotMessage(`Error getting feature suggestions: ${error.message}`);
+            });
+        }
+        
+        function applyFeatureEngineering() {
+            if (!currentFilename) return;
+            
+            showLoading("Applying feature engineering...");
+            
+            // This would send commands to apply feature engineering
+            const commands = [
+                "normalize numeric columns",
+                "one-hot encode categorical variables",
+                "extract date parts from date columns"
+            ];
+            
+            executeCommandsSequentially(commands)
+                .then(() => {
+                    addBotMessage("Feature engineering applied successfully!");
+                    // Refresh the data
+                    return fetch(`/get-data?filename=${encodeURIComponent(currentFilename)}`);
+                })
+                .then(response => response.json())
+                .then(data => {
+                    currentDataset = data.sample_data;
+                    currentColumns = data.columns;
+                    showDataPreview(data.sample_data, data.columns);
+                })
+                .catch(error => {
+                    addBotMessage(`Error applying feature engineering: ${error.message}`);
+                })
+                .finally(() => {
+                    hideLoading();
+                });
+        }
+        
+        function suggestMLModels() {
+            if (!currentDataset) return;
+            
+            // Ask user for target column
+            addBotMessage(`
+                <p>To recommend machine learning models, please specify:</p>
+                <ol>
+                    <li>Which column is your target variable?</li>
+                    <li>Is this a classification or regression problem?</li>
+                </ol>
+                <p>For example: "I want to predict [column_name] as a [classification/regression] problem"</p>
+            `);
+        }
+        
+        function executeCommandsSequentially(commands) {
+            return commands.reduce((promiseChain, command) => {
+                return promiseChain.then(() => {
+                    return new Promise((resolve) => {
+                        setTimeout(() => {
+                            fetch('/chatbot/chat', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    message: command
+                                })
+                            })
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.status === 'success') {
+                                    resolve();
+                                } else {
+                                    throw new Error(data.message || "Command failed");
+                                }
+                            })
+                            .catch(error => {
+                                console.error(`Error executing command "${command}":`, error);
+                                resolve(); // Continue with next command even if one fails
+                            });
+                        }, 500); // Small delay between commands
+                    });
+                });
+            }, Promise.resolve());
+        }
+        
+        // Keep all your existing chat functions (sendMessage, addUserMessage, addBotMessage, etc.)
+        // Update generateAIResponse to handle more specific data-related queries
+        
+        function generateAIResponse(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            // Enhanced data-specific responses
+            if (lowerMessage.includes('missing') || lowerMessage.includes('null')) {
+                return `
+                    <p>I found missing values in your dataset:</p>
+                    <ul>
+                        <li><strong>age:</strong> 12 missing values (5% of column)</li>
+                        <li><strong>income:</strong> 8 missing values (3% of column)</li>
+                    </ul>
+                    <p>I recommend:</p>
+                    <ol>
+                        <li>For numeric columns: Fill with median values</li>
+                        <li>For categorical columns: Fill with mode or create 'Unknown' category</li>
+                    </ol>
+                    <div class="action-buttons">
+                        <button class="action-button action-button-primary" onclick="executeCommand('fill nulls with median')">Fill with Median</button>
+                        <button class="action-button action-button-secondary" onclick="executeCommand('drop nulls')">Drop Rows</button>
+                    </div>
+                `;
+            } else if (lowerMessage.includes('duplicate')) {
+                return `
+                    <p>Found 5 duplicate rows in your dataset.</p>
+                    <p>Would you like to remove them?</p>
+                    <div class="action-buttons">
+                        <button class="action-button action-button-primary" onclick="executeCommand('remove duplicates')">Remove Duplicates</button>
+                    </div>
+                `;
+            } else if (lowerMessage.includes('normalize') || lowerMessage.includes('scale')) {
+                return `
+                    <p>I can help normalize your numeric columns:</p>
+                    <ul>
+                        <li>Min-Max Scaling (values between 0 and 1)</li>
+                        <li>Standard Scaling (mean=0, std=1)</li>
+                        <li>Robust Scaling (resistant to outliers)</li>
+                    </ul>
+                    <div class="action-buttons">
+                        <button class="action-button action-button-primary" onclick="executeCommand('normalize using min-max')">Min-Max Scale</button>
+                        <button class="action-button action-button-secondary" onclick="executeCommand('normalize using standard')">Standard Scale</button>
+                    </div>
+                `;
+            } else if (lowerMessage.includes('predict') || lowerMessage.includes('model')) {
+                return suggestMLModels();
+            } else {
+                // Default to your existing responses
+                const randomResponses = [
+                    "I've analyzed your data and found some interesting patterns. Would you like me to share the insights?",
+                    "That's an interesting question about your data. Let me analyze it further and provide recommendations.",
+                    "I can help with that. First, let me examine the relevant columns in your dataset.",
+                    "Based on my analysis of your data, here's what I recommend...",
+                    "I've processed similar datasets before. Here are some best practices for your situation:"
+                ];
+                
+                return randomResponses[Math.floor(Math.random() * randomResponses.length)];
+            }
+        }
+        
+        function executeCommand(command) {
+            if (!currentFilename) {
+                addBotMessage("Please upload a dataset first.");
+                return;
+            }
+            
+            addUserMessage(command);
+            simulateTyping(() => {
+                fetch('/chatbot/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: command
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        addBotMessage(data.message);
+                        
+                        // Update data if changed
+                        if (data.dataframe) {
+                            currentDataset = data.dataframe;
+                            currentColumns = data.columns;
+                            
+                            // Show updated data
+                            if (data.preview) {
+                                showDataPreview(data.preview, data.columns);
+                            }
+                        }
+                    } else {
+                        addBotMessage(data.message || "Command failed");
+                    }
+                })
+                .catch(error => {
+                    addBotMessage(`Error executing command: ${error.message}`);
+                });
+            });
+        }
+        
+        function showLoading(message) {
+            // Implement loading indicator
+        }
+        
+        function hideLoading() {
+            // Hide loading indicator
+        }
+        // Get dataset info from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const datasetName = urlParams.get('dataset') || 'Your Dataset';
+        const datasetSize = urlParams.get('size') || '0';
+        const datasetColumns = urlParams.get('columns') || '0';
+        
+        // Update UI with dataset info
+        document.getElementById('dataset-name').textContent = datasetName;
+        
+        // Simulate AI analyzing the data
+        setTimeout(() => {
+            // Update dataset overview
+            document.getElementById('dataset-overview').innerHTML = `
+                <p>Your dataset <strong>${datasetName}</strong> contains:</p>
+                <ul style="margin-top: 8px; padding-left: 20px;">
+                    <li>${datasetSize} rows</li>
+                    <li>${datasetColumns} columns</li>
+                    <li>Mixed data types (numeric, text, categorical)</li>
+                </ul>
+            `;
+            
+            // Update data quality insights
+            document.getElementById('data-quality').innerHTML = `
+                <p>Found several potential issues:</p>
+                <ul style="margin-top: 8px; padding-left: 20px;">
+                    <li>12 missing values in 'age' column</li>
+                    <li>5 duplicate rows</li>
+                    <li>Inconsistent formatting in 'date' column</li>
+                </ul>
+            `;
+            document.getElementById('quality-actions').style.display = 'flex';
+            
+            // Update feature engineering suggestions
+            document.getElementById('feature-engineering').innerHTML = `
+                <p>Recommended feature engineering:</p>
+                <ul style="margin-top: 8px; padding-left: 20px;">
+                    <li>Normalize numeric columns</li>
+                    <li>One-hot encode categorical variables</li>
+                    <li>Extract date parts from timestamp</li>
+                </ul>
+            `;
+            document.getElementById('feature-actions').style.display = 'flex';
+            
+            // Create sample chart
+            createSampleChart();
+            
+        }, 2000);
+        
+        // Chat functionality
+        const chatInput = document.getElementById('chat-input');
+        const sendButton = document.getElementById('send-button');
+        const chatMessages = document.getElementById('chat-messages');
+        
+        sendButton.addEventListener('click', sendMessage);
+        chatInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+        
+        // Quick action buttons
+        document.getElementById('clean-data-btn').addEventListener('click', () => {
+            addBotMessage("I can help clean your data. Here are the issues I found and how we can fix them:");
+            simulateTyping(() => {
+                addBotMessage(`
+                    <p><strong>Data Cleaning Recommendations:</strong></p>
+                    <ol>
+                        <li><strong>Missing Values:</strong> 12 missing values in 'age' column. We can:
+                            <ul>
+                                <li>Fill with median (recommended)</li>
+                                <li>Fill with mean</li>
+                                <li>Drop rows</li>
+                            </ul>
+                        </li>
+                        <li><strong>Duplicates:</strong> 5 duplicate rows that should be removed</li>
+                        <li><strong>Date Formatting:</strong> Standardize all dates to YYYY-MM-DD format</li>
+                    </ol>
+                    <p>Would you like me to apply these changes?</p>
+                `);
+            });
+        });
+        
+        document.getElementById('analyze-trends-btn').addEventListener('click', () => {
+            addBotMessage("Analyzing trends in your dataset...");
+            simulateTyping(() => {
+                addBotMessage(`
+                    <p><strong>Trend Analysis Results:</strong></p>
+                    <ul>
+                        <li>Strong positive correlation between 'income' and 'education_level'</li>
+                        <li>Seasonal patterns in 'purchase_date' with peaks in December</li>
+                        <li>Outliers detected in 'transaction_amount'</li>
+                    </ul>
+                    <div class="chart-container" style="margin-top: 15px;">
+                        <div class="chart-wrapper" id="trend-chart" style="height: 200px;"></div>
+                    </div>
+                `);
+                createTrendChart();
+            });
+        });
+        
+        document.getElementById('feature-suggestions-btn').addEventListener('click', () => {
+            addBotMessage("Generating feature engineering suggestions...");
+            simulateTyping(() => {
+                addBotMessage(`
+                    <p><strong>Feature Engineering Suggestions:</strong></p>
+                    <ol>
+                        <li><strong>For 'purchase_date':</strong>
+                            <ul>
+                                <li>Extract day of week</li>
+                                <li>Calculate days since first purchase</li>
+                                <li>Create weekend flag</li>
+                            </ul>
+                        </li>
+                        <li><strong>For 'transaction_amount':</strong>
+                            <ul>
+                                <li>Log transform</li>
+                                <li>Create bins (low, medium, high)</li>
+                            </ul>
+                        </li>
+                        <li><strong>Interaction Features:</strong>
+                            <ul>
+                                <li>age * income</li>
+                                <li>education_level * income</li>
+                            </ul>
+                        </li>
+                    </ol>
+                    <p>Here's code to implement these features:</p>
+                    <div class="code-snippet">
+                        <span class="code-keyword">import</span> pandas <span class="code-keyword">as</span> pd<br>
+                        <span class="code-keyword">import</span> numpy <span class="code-keyword">as</span> np<br><br>
+                        
+                        <span class="code-comment"># Date features</span><br>
+                        df[<span class="code-string">'purchase_day_of_week'</span>] = df[<span class="code-string">'purchase_date'</span>].dt.dayofweek<br>
+                        df[<span class="code-string">'is_weekend'</span>] = df[<span class="code-string">'purchase_day_of_week'</span>].isin([5,6]).astype(int)<br><br>
+                        
+                        <span class="code-comment"># Transaction features</span><br>
+                        df[<span class="code-string">'log_transaction'</span>] = np.log1p(df[<span class="code-string">'transaction_amount'</span>])
+                    </div>
+                `);
+            });
+        });
+        
+        document.getElementById('ml-suggestions-btn').addEventListener('click', () => {
+            addBotMessage("Analyzing your data for machine learning...");
+            simulateTyping(() => {
+                addBotMessage(`
+                    <p><strong>ML Model Recommendations:</strong></p>
+                    <p>Based on your data characteristics, I recommend:</p>
+                    <ol>
+                        <li><strong>For classification tasks:</strong>
+                            <ul>
+                                <li>Random Forest (best for mixed data types)</li>
+                                <li>XGBoost (best for performance)</li>
+                                <li>Logistic Regression (best for interpretability)</li>
+                            </ul>
+                        </li>
+                        <li><strong>For regression tasks:</strong>
+                            <ul>
+                                <li>Gradient Boosting Regressor</li>
+                                <li>Random Forest Regressor</li>
+                            </ul>
+                        </li>
+                    </ol>
+                    <p>Would you like me to generate sample code for model training?</p>
+                `);
+            });
+        });
+        
+        function sendMessage() {
+            const message = chatInput.value.trim();
+            if (!message) return;
+            
+            // Add user message
+            addUserMessage(message);
+            chatInput.value = '';
+            
+            // Simulate AI thinking
+            simulateTyping(() => {
+                // Generate AI response
+                const response = generateAIResponse(message);
+                addBotMessage(response);
+            });
+        }
+        
+        function addUserMessage(text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            messageDiv.innerHTML = `
+                <div class="message-user">
+                    <div class="message-content user-message">${text}</div>
+                </div>
+            `;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        function addBotMessage(text) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            messageDiv.innerHTML = `
+                <div class="message-bot">
+                    <div class="message-avatar bot-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="message-content bot-message">${text}</div>
+                </div>
+            `;
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        function simulateTyping(callback) {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message';
+            typingDiv.innerHTML = `
+                <div class="message-bot">
+                    <div class="message-avatar bot-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="message-content bot-message">
+                        <div class="typing-indicator">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            chatMessages.appendChild(typingDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            
+            setTimeout(() => {
+                chatMessages.removeChild(typingDiv);
+                callback();
+            }, 1500 + Math.random() * 1000);
+        }
+        
+        function generateAIResponse(message) {
+            const lowerMessage = message.toLowerCase();
+            
+            if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
+                return "Hello! How can I assist you with your data today?";
+            } else if (lowerMessage.includes('missing') || lowerMessage.includes('null')) {
+                return `
+                    <p>I found missing values in your dataset:</p>
+                    <ul>
+                        <li><strong>age:</strong> 12 missing values (5% of column)</li>
+                        <li><strong>income:</strong> 8 missing values (3% of column)</li>
+                    </ul>
+                    <p>I recommend:</p>
+                    <ol>
+                        <li>For numeric columns: Fill with median values</li>
+                        <li>For categorical columns: Fill with mode or create 'Unknown' category</li>
+                    </ol>
+                    <p>Would you like me to handle these missing values for you?</p>
+                `;
+            } else if (lowerMessage.includes('clean') || lowerMessage.includes('preprocess')) {
+                return `
+                    <p>Here's a comprehensive data cleaning plan for your dataset:</p>
+                    <ol>
+                        <li><strong>Handle Missing Values:</strong>
+                            <ul>
+                                <li>Fill numeric columns with median</li>
+                                <li>Fill categorical columns with mode</li>
+                            </ul>
+                        </li>
+                        <li><strong>Remove Duplicates:</strong> 5 duplicate rows identified</li>
+                        <li><strong>Standardize Formats:</strong>
+                            <ul>
+                                <li>Convert all dates to YYYY-MM-DD</li>
+                                <li>Standardize text to lowercase</li>
+                            </ul>
+                        </li>
+                        <li><strong>Outlier Treatment:</strong> Cap extreme values in numeric columns</li>
+                    </ol>
+                    <p>I can implement all these changes with one click. Would you like to proceed?</p>
+                `;
+            } else if (lowerMessage.includes('feature') || lowerMessage.includes('engineer')) {
+                return `
+                    <p><strong>Feature Engineering Recommendations:</strong></p>
+                    <ol>
+                        <li><strong>For date columns:</strong>
+                            <ul>
+                                <li>Extract year, month, day, day of week</li>
+                                <li>Create time since first/last event</li>
+                                <li>Flag holidays/weekends</li>
+                            </ul>
+                        </li>
+                        <li><strong>For numeric columns:</strong>
+                            <ul>
+                                <li>Create bins/quantiles</li>
+                                <li>Add polynomial features</li>
+                                <li>Apply log transformations</li>
+                            </ul>
+                        </li>
+                        <li><strong>For text columns:</strong>
+                            <ul>
+                                <li>Create length features</li>
+                                <li>Extract keywords</li>
+                                <li>Create TF-IDF features</li>
+                            </ul>
+                        </li>
+                    </ol>
+                    <p>Would you like me to generate any of these features?</p>
+                `;
+            } else if (lowerMessage.includes('visual') || lowerMessage.includes('chart')) {
+                return `
+                    <p><strong>Visualization Suggestions:</strong></p>
+                    <p>Based on your data, these visualizations would be insightful:</p>
+                    <ol>
+                        <li><strong>Distribution Plots:</strong> For all numeric columns to understand spread</li>
+                        <li><strong>Correlation Heatmap:</strong> To identify relationships between variables</li>
+                        <li><strong>Time Series Plot:</strong> For date columns to spot trends/seasonality</li>
+                        <li><strong>Bar Charts:</strong> For categorical columns to show frequency</li>
+                    </ol>
+                    <div class="chart-container" style="margin-top: 15px;">
+                        <div class="chart-wrapper" id="suggestion-chart" style="height: 200px;"></div>
+                    </div>
+                    <p>I can generate any of these visualizations for you. Which would you like to see?</p>
+                `;
+            } else if (lowerMessage.includes('model') || lowerMessage.includes('machine learning')) {
+                return `
+                    <p><strong>Machine Learning Recommendations:</strong></p>
+                    <p>Based on your data characteristics, I recommend:</p>
+                    <ol>
+                        <li><strong>For classification:</strong>
+                            <ul>
+                                <li>Random Forest (best balance of performance/interpretability)</li>
+                                <li>XGBoost (best raw performance)</li>
+                                <li>Logistic Regression (fastest and most interpretable)</li>
+                            </ul>
+                        </li>
+                        <li><strong>For regression:</strong>
+                            <ul>
+                                <li>Gradient Boosting Regressor</li>
+                                <li>Random Forest Regressor</li>
+                            </ul>
+                        </li>
+                    </ol>
+                    <p>Here's sample code to train a Random Forest classifier:</p>
+                    <div class="code-snippet">
+                        <span class="code-keyword">from</span> sklearn.ensemble <span class="code-keyword">import</span> RandomForestClassifier<br>
+                        <span class="code-keyword">from</span> sklearn.model_selection <span class="code-keyword">import</span> train_test_split<br><br>
+                        
+                        <span class="code-comment"># Split data</span><br>
+                        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)<br><br>
+                        
+                        <span class="code-comment"># Train model</span><br>
+                        model = RandomForestClassifier(n_estimators=100, random_state=42)<br>
+                        model.fit(X_train, y_train)<br><br>
+                        
+                        <span class="code-comment"># Evaluate</span><br>
+                        score = model.score(X_test, y_test)<br>
+                        print(<span class="code-string">f"Model accuracy: {score:.2f}"</span>)
+                    </div>
+                    <p>Would you like me to help implement this?</p>
+                `;
+            } else {
+                // Default response for unrecognized queries
+                const randomResponses = [
+                    "I've analyzed your data and found some interesting patterns. Would you like me to share the insights?",
+                    "That's an interesting question about your data. Let me analyze it further and provide recommendations.",
+                    "I can help with that. First, let me examine the relevant columns in your dataset.",
+                    "Based on my analysis of your data, here's what I recommend...",
+                    "I've processed similar datasets before. Here are some best practices for your situation:"
+                ];
+                
+                return randomResponses[Math.floor(Math.random() * randomResponses.length)];
+            }
+        }
+        
+        function createSampleChart() {
+            const options = {
+                series: [{
+                    name: 'Distribution',
+                    data: [30, 40, 35, 50, 49, 60, 70, 91, 125]
+                }],
+                chart: {
+                    type: 'bar',
+                    height: '100%'
+                },
+                plotOptions: {
+                    bar: {
+                        borderRadius: 4,
+                        horizontal: true,
+                    }
+                },
+                dataLabels: {
+                    enabled: false
+                },
+                xaxis: {
+                    categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep'],
+                },
+                colors: [var(--primary)]
+            };
+            
+            const chart = new ApexCharts(document.querySelector("#column-chart"), options);
+            chart.render();
+        }
+        
+        function createTrendChart() {
+            setTimeout(() => {
+                const options = {
+                    series: [{
+                        name: "Income",
+                        data: [30, 40, 45, 50, 49, 60, 70, 91]
+                    }, {
+                        name: "Spending",
+                        data: [20, 34, 45, 55, 79, 87, 90, 98]
+                    }],
+                    chart: {
+                        height: '100%',
+                        type: 'line',
+                        zoom: {
+                            enabled: false
+                        }
+                    },
+                    dataLabels: {
+                        enabled: false
+                    },
+                    stroke: {
+                        curve: 'straight'
+                    },
+                    colors: [var(--primary), var(--secondary)],
+                    xaxis: {
+                        categories: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug'],
+                    }
+                };
+                
+                const chart = new ApexCharts(document.querySelector("#trend-chart"), options);
+                chart.render();
+            }, 100);
+        }
+        
+        // Initialize with dataset info
+        window.onload = function() {
+            // Simulate initial analysis
+            setTimeout(() => {
+                addBotMessage(`I've loaded your dataset <strong>${datasetName}</strong> with ${datasetSize} rows and ${datasetColumns} columns.`);
+                simulateTyping(() => {
+                    addBotMessage("I'm now analyzing the data structure, quality issues, and potential transformations. This will just take a moment...");
+                    simulateTyping(() => {
+                        addBotMessage(`
+                            <p><strong>Initial Analysis Complete</strong></p>
+                            <p>Here's a quick summary of your data:</p>
+                            <ul>
+                                <li><strong>Data Types:</strong> Numeric (5), Categorical (3), Text (2), Date (1)</li>
+                                <li><strong>Data Quality:</strong> 12 missing values, 5 duplicates found</li>
+                                <li><strong>Key Columns:</strong> 'age', 'income', 'purchase_date', 'product_category'</li>
+                            </ul>
+                            <p>What would you like to explore first?</p>
+                        `);
+                    });
+                });
+            }, 1000);
+        };
+    </script>
+</body>
+</html>

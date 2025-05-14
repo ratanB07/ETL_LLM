@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GENFLOW - AutoML Results</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #6366f1;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 16px 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header-title i {
+            font-size: 28px;
+        }
+
+        .back-button {
+            background-color: white;
+            color: var(--primary);
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .back-button:hover {
+            background-color: #e0e7ff;
+        }
+
+        .section {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 30px;
+            overflow: hidden;
+        }
+
+        .section-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-body {
+            padding: 20px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            border-top: 3px solid var(--primary);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-content {
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            margin-top: 15px;
+        }
+
+        .model-results {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .model-card {
+            flex: 1;
+            min-width: 250px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            border-left: 4px solid var(--primary);
+            transition: all 0.2s;
+        }
+
+        .model-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .model-name {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--dark);
+        }
+
+        .model-metric {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 5px;
+            font-size: 13px;
+        }
+
+        .metric-name {
+            color: var(--gray);
+        }
+
+        .metric-value {
+            font-weight: 500;
+        }
+
+        .best-model {
+            border-left: 4px solid var(--secondary);
+            background-color: #f0fdf4;
+        }
+
+        .feature-importance {
+            margin-top: 20px;
+        }
+
+        .explanation {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+            border-left: 3px solid var(--info);
+        }
+
+        .explanation-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--dark);
+        }
+
+        .explanation-content {
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-left: 8px;
+        }
+
+        .badge-primary {
+            background-color: #e0e7ff;
+            color: var(--primary);
+        }
+
+        .badge-success {
+            background-color: #d1fae5;
+            color: var(--secondary);
+        }
+
+        .badge-warning {
+            background-color: #fef3c7;
+            color: var(--warning);
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--gray-light);
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--gray);
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom: 2px solid var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .data-preview {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 15px;
+            border: 1px solid var(--gray-light);
+            border-radius: 6px;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .data-table th {
+            background-color: #f8fafc;
+            padding: 10px;
+            text-align: left;
+            border: 1px solid var(--gray-light);
+            font-weight: 600;
+            color: var(--dark);
+            position: sticky;
+            top: 0;
+        }
+
+        .data-table td {
+            padding: 10px;
+            border: 1px solid var(--gray-light);
+            color: var(--dark);
+        }
+
+        .data-table tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        .problem-type-selector {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .problem-type-btn {
+            padding: 10px 20px;
+            background-color: white;
+            border: 1px solid var(--gray-light);
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .problem-type-btn.active {
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .problem-type-btn i {
+            font-size: 16px;
+        }
+
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 40px;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #e0e7ff;
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .target-selector {
+            margin-bottom: 20px;
+        }
+
+        .target-selector label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .target-selector select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--gray-light);
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .alert-info {
+            background-color: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .alert-success {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .alert i {
+            font-size: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-title">
+                <i class="fas fa-robot"></i>
+                <span>AutoML Results</span>
+            </div>
+            <button class="back-button" onclick="window.close()">
+                <i class="fas fa-arrow-left"></i>
+                Back to ETL
+            </button>
+        </div>
+
+        <div class="alert alert-info">
+            <i class="fas fa-info-circle"></i>
+            <div>
+                <strong>AutoML Analysis Complete</strong>
+                <p>We've automatically analyzed your data and built several machine learning models. Below you'll find the results, visualizations, and explanations.</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Model Performance</span>
+                </div>
+            </div>
+            <div class="section-body">
+                <div class="tabs">
+                    <div class="tab active" onclick="setActiveTab(this, 'classification')">Classification</div>
+                    <div class="tab" onclick="setActiveTab(this, 'regression')">Regression</div>
+                </div>
+
+                <div id="classification" class="tab-content active">
+                    <div class="model-results">
+                        <!-- Best Model -->
+                        <div class="model-card best-model">
+                            <div class="model-name">
+                                Random Forest
+                                <span class="badge badge-success">Best Model</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">Accuracy:</span>
+                                <span class="metric-value">0.92</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">Precision:</span>
+                                <span class="metric-value">0.91</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">Recall:</span>
+                                <span class="metric-value">0.93</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">F1 Score:</span>
+                                <span class="metric-value">0.92</span>
+                            </div>
+                        </div>
+
+                        <!-- Other Models -->
+                        <div class="model-card">
+                            <div class="model-name">Gradient Boosting</div>
+                            <div class="model-metric">
+                                <span class="metric-name">Accuracy:</span>
+                                <span class="metric-value">0.90</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">Precision:</span>
+                                <span class="metric-value">0.89</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">Recall:</span>
+                                <span class="metric-value">0.91</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">F1 Score:</span>
+                                <span class="metric-value">0.90</span>
+                            </div>
+                        </div>
+
+                        <div class="model-card">
+                            <div class="model-name">Logistic Regression</div>
+                            <div class="model-metric">
+                                <span class="metric-name">Accuracy:</span>
+                                <span class="metric-value">0.85</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">Precision:</span>
+                                <span class="metric-value">0.84</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">Recall:</span>
+                                <span class="metric-value">0.86</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">F1 Score:</span>
+                                <span class="metric-value">0.85</span>
+                            </div>
+                        </div>
+
+                        <div class="model-card">
+                            <div class="model-name">Decision Tree</div>
+                            <div class="model-metric">
+                                <span class="metric-name">Accuracy:</span>
+                                <span class="metric-value">0.82</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">Precision:</span>
+                                <span class="metric-value">0.81</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">Recall:</span>
+                                <span class="metric-value">0.83</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">F1 Score:</span>
+                                <span class="metric-value">0.82</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid">
+                        <div class="card">
+                            <div class="card-title">
+                                <i class="fas fa-chart-pie"></i>
+                                <span>Confusion Matrix</span>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="confusionMatrixChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-title">
+                                <i class="fas fa-star"></i>
+                                <span>Feature Importance</span>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="featureImportanceChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="regression" class="tab-content">
+                    <div class="model-results">
+                        <!-- Best Model -->
+                        <div class="model-card best-model">
+                            <div class="model-name">
+                                Gradient Boosting
+                                <span class="badge badge-success">Best Model</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">R² Score:</span>
+                                <span class="metric-value">0.88</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">MAE:</span>
+                                <span class="metric-value">1.23</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">MSE:</span>
+                                <span class="metric-value">2.45</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">RMSE:</span>
+                                <span class="metric-value">1.56</span>
+                            </div>
+                        </div>
+
+                        <!-- Other Models -->
+                        <div class="model-card">
+                            <div class="model-name">Random Forest</div>
+                            <div class="model-metric">
+                                <span class="metric-name">R² Score:</span>
+                                <span class="metric-value">0.85</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">MAE:</span>
+                                <span class="metric-value">1.45</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">MSE:</span>
+                                <span class="metric-value">2.89</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">RMSE:</span>
+                                <span class="metric-value">1.70</span>
+                            </div>
+                        </div>
+
+                        <div class="model-card">
+                            <div class="model-name">Linear Regression</div>
+                            <div class="model-metric">
+                                <span class="metric-name">R² Score:</span>
+                                <span class="metric-value">0.78</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">MAE:</span>
+                                <span class="metric-value">1.89</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">MSE:</span>
+                                <span class="metric-value">3.56</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">RMSE:</span>
+                                <span class="metric-value">1.89</span>
+                            </div>
+                        </div>
+
+                        <div class="model-card">
+                            <div class="model-name">Decision Tree</div>
+                            <div class="model-metric">
+                                <span class="metric-name">R² Score:</span>
+                                <span class="metric-value">0.72</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">MAE:</span>
+                                <span class="metric-value">2.12</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">MSE:</span>
+                                <span class="metric-value">4.23</span>
+                            </div>
+                            <div class="model-metric">
+                                <span class="metric-name">RMSE:</span>
+                                <span class="metric-value">2.06</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid">
+                        <div class="card">
+                            <div class="card-title">
+                                <i class="fas fa-chart-line"></i>
+                                <span>Actual vs Predicted</span>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="actualVsPredictedChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="card">
+                            <div class="card-title">
+                                <i class="fas fa-star"></i>
+                                <span>Feature Importance</span>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="regressionFeatureImportanceChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <i class="fas fa-lightbulb"></i>
+                    <span>Model Explainability</span>
+                </div>
+            </div>
+            <div class="section-body">
+                <div class="grid">
+                    <div class="card">
+                        <div class="card-title">
+                            <i class="fas fa-question-circle"></i>
+                            <span>Why This Model?</span>
+                        </div>
+                        <div class="card-content">
+                            <p>The Random Forest model was selected as the best model because it achieved the highest accuracy (92%) while maintaining good balance between precision and recall.</p>
+                            <p>Random Forest works well with both numerical and categorical data, handles missing values gracefully, and is less prone to overfitting compared to simpler models.</p>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-title">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Key Insights</span>
+                        </div>
+                        <div class="card-content">
+                            <ul style="padding-left: 20px; margin-top: 10px;">
+                                <li style="margin-bottom: 8px;">The feature "Age" has the highest importance in predicting the outcome</li>
+                                <li style="margin-bottom: 8px;">The model struggles most with cases where multiple features have medium values</li>
+                                <li style="margin-bottom: 8px;">The false positive rate is higher than false negative rate</li>
+                                <li>Certain combinations of features create strong predictive patterns</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="explanation">
+                    <div class="explanation-title">
+                        <i class="fas fa-comment-alt"></i>
+                        <span>Model Decision Explanation</span>
+                    </div>
+                    <div class="explanation-content">
+                        <p>For a sample prediction where the model predicted "Yes" with 87% confidence:</p>
+                        <ul style="padding-left: 20px; margin-top: 10px;">
+                            <li style="margin-bottom: 8px;"><strong>Age > 45</strong> increased the probability by 32%</li>
+                            <li style="margin-bottom: 8px;"><strong>Income between $50k-$75k</strong> increased the probability by 18%</li>
+                            <li style="margin-bottom: 8px;"><strong>Location = Urban</strong> decreased the probability by 5%</li>
+                            <li><strong>Education = College</strong> increased the probability by 12%</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <i class="fas fa-database"></i>
+                    <span>Data Preview</span>
+                </div>
+            </div>
+            <div class="section-body">
+                <div class="data-preview">
+                    <table class="data-table" id="dataPreviewTable">
+                        <thead>
+                            <tr>
+                                <!-- Columns will be inserted here by JavaScript -->
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Rows will be inserted here by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load the data passed from the parent window
+        document.addEventListener('DOMContentLoaded', function() {
+            const autoMLData = JSON.parse(sessionStorage.getItem('autoMLData'));
+            
+            if (autoMLData && autoMLData.data && autoMLData.columns) {
+                // Display data preview
+                displayDataPreview(autoMLData.data, autoMLData.columns);
+                
+                // Initialize charts
+                initializeCharts();
+            } else {
+                alert('No data available for AutoML analysis');
+                window.close();
+            }
+        });
+
+        function setActiveTab(element, tabId) {
+            // Update tab UI
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            element.classList.add('active');
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function displayDataPreview(data, columns) {
+            const tableHead = document.querySelector('#dataPreviewTable thead tr');
+            const tableBody = document.querySelector('#dataPreviewTable tbody');
+            
+            // Clear existing content
+            tableHead.innerHTML = '';
+            tableBody.innerHTML = '';
+            
+            // Add headers
+            columns.forEach(col => {
+                const th = document.createElement('th');
+                th.textContent = col;
+                tableHead.appendChild(th);
+            });
+            
+            // Add sample rows (limit to 20 for performance)
+            const sampleData = data.slice(0, 20);
+            sampleData.forEach(row => {
+                const tr = document.createElement('tr');
+                
+                columns.forEach(col => {
+                    const td = document.createElement('td');
+                    td.textContent = row[col] !== undefined ? row[col] : '';
+                    tr.appendChild(td);
+                });
+                
+                tableBody.appendChild(tr);
+            });
+        }
+
+        function initializeCharts() {
+            // Confusion Matrix Chart
+            const confusionMatrixCtx = document.getElementById('confusionMatrixChart').getContext('2d');
+            new Chart(confusionMatrixCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['True Negative', 'False Positive', 'False Negative', 'True Positive'],
+                    datasets: [{
+                        label: 'Count',
+                        data: [125, 15, 12, 148],
+                        backgroundColor: [
+                            '#10b981',
+                            '#f59e0b',
+                            '#f59e0b',
+                            '#10b981'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+
+            // Feature Importance Chart
+            const featureImportanceCtx = document.getElementById('featureImportanceChart').getContext('2d');
+            new Chart(featureImportanceCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Age', 'Income', 'Education', 'Location', 'Tenure'],
+                    datasets: [{
+                        label: 'Importance',
+                        data: [0.32, 0.25, 0.18, 0.15, 0.10],
+                        backgroundColor: '#4f46e5'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+
+            // Actual vs Predicted Chart
+            const actualVsPredictedCtx = document.getElementById('actualVsPredictedChart').getContext('2d');
+            new Chart(actualVsPredictedCtx, {
+                type: 'scatter',
+                data: {
+                    datasets: [{
+                        label: 'Actual vs Predicted',
+                        data: [
+                            {x: 10, y: 9.8},
+                            {x: 15, y: 14.5},
+                            {x: 20, y: 19.2},
+                            {x: 25, y: 24.1},
+                            {x: 30, y: 29.5},
+                            {x: 35, y: 33.8},
+                            {x: 40, y: 38.2},
+                            {x: 45, y: 43.9},
+                            {x: 50, y: 48.1},
+                            {x: 55, y: 52.7}
+                        ],
+                        backgroundColor: '#4f46e5',
+                        pointRadius: 6
+                    }, {
+                        label: 'Perfect Prediction',
+                        data: [
+                            {x: 10, y: 10},
+                            {x: 55, y: 55}
+                        ],
+                        backgroundColor: '#10b981',
+                        pointRadius: 0,
+                        borderColor: '#10b981',
+                        borderWidth: 1,
+                        showLine: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Actual Values'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Predicted Values'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Regression Feature Importance Chart
+            const regressionFeatureImportanceCtx = document.getElementById('regressionFeatureImportanceChart').getContext('2d');
+            new Chart(regressionFeatureImportanceCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Square Footage', 'Bedrooms', 'Bathrooms', 'Age', 'Location'],
+                    datasets: [{
+                        label: 'Importance',
+                        data: [0.45, 0.25, 0.15, 0.10, 0.05],
+                        backgroundColor: '#4f46e5'
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>

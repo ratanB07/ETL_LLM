@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LLM Model Training & Deployment</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #6366f1;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: var(--dark);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        .header-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .button {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+        }
+
+        .button-secondary {
+            background: white;
+            color: var(--primary);
+            border: 1px solid var(--gray-light);
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .status-processing {
+            background-color: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+        }
+
+        .status-success {
+            background-color: rgba(16, 185, 129, 0.1);
+            color: var(--secondary);
+        }
+
+        .status-error {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: var(--danger);
+        }
+
+        .panel {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-light);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-body {
+            padding: 20px;
+        }
+
+        .progress-container {
+            width: 100%;
+            background-color: var(--gray-light);
+            border-radius: 8px;
+            height: 10px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+            width: 0;
+            transition: width 0.3s ease;
+            border-radius: 8px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 20px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-light);
+        }
+
+        .metric-label {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 5px;
+        }
+
+        .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        .log-container {
+            height: 300px;
+            overflow-y: auto;
+            background-color: #1e293b;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .log-entry {
+            margin-bottom: 5px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .log-info {
+            color: #3b82f6;
+        }
+
+        .log-success {
+            color: #10b981;
+        }
+
+        .log-warning {
+            color: #f59e0b;
+        }
+
+        .log-error {
+            color: #ef4444;
+        }
+
+        .chart-container {
+            height: 300px;
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .deployment-info {
+            background-color: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .endpoint-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-light);
+            margin-top: 15px;
+        }
+
+        .endpoint-url {
+            font-family: monospace;
+            background-color: #1e293b;
+            color: white;
+            padding: 10px;
+            border-radius: 6px;
+            word-break: break-all;
+            margin: 10px 0;
+        }
+
+        .usage-example {
+            background-color: #f8fafc;
+            border-left: 3px solid var(--primary);
+            padding: 10px 15px;
+            margin: 15px 0;
+            font-family: monospace;
+            font-size: 13px;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .pulse {
+            animation: pulse 1.5s infinite;
+        }
+
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .metrics-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="header-title">
+                <i class="fas fa-robot"></i>
+                <span>LLM Model Training & Deployment</span>
+                <span id="trainingStatus" class="status-badge status-processing">
+                    <i class="fas fa-spinner spinner"></i>
+                    <span>Training in progress</span>
+                </span>
+            </div>
+            <div class="header-actions">
+                <button class="button button-secondary" id="refreshBtn">
+                    <i class="fas fa-sync-alt"></i>
+                    Refresh
+                </button>
+                <button class="button" id="exportReportBtn">
+                    <i class="fas fa-file-export"></i>
+                    Export Report
+                </button>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="fas fa-tasks"></i>
+                    Training Progress
+                </div>
+                <div id="progressTime">Started just now</div>
+            </div>
+            <div class="panel-body">
+                <div class="progress-container">
+                    <div class="progress-bar" id="trainingProgress"></div>
+                </div>
+                <div class="progress-info">
+                    <span id="progressText">Initializing training environment...</span>
+                    <span id="progressPercent">0%</span>
+                </div>
+                <div class="metrics-grid" id="trainingMetrics">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+                <div class="chart-container">
+                    <canvas id="trainingChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="fas fa-terminal"></i>
+                    Training Logs
+                </div>
+                <div>
+                    <button class="button button-secondary button-sm" id="clearLogsBtn">
+                        <i class="fas fa-trash-alt"></i>
+                        Clear
+                    </button>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="log-container" id="trainingLogs">
+                    <!-- Logs will be added here -->
+                </div>
+            </div>
+        </div>
+
+        <div class="panel" id="deploymentPanel" style="display: none;">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    Deployment Results
+                </div>
+                <div id="deploymentStatus" class="status-badge status-processing">
+                    <i class="fas fa-spinner spinner"></i>
+                    <span>Deploying</span>
+                </div>
+            </div>
+            <div class="panel-body">
+                <div id="deploymentInfo" class="deployment-info">
+                    <p>Your model is being deployed to our cloud infrastructure. This typically takes 2-3 minutes.</p>
+                    <div class="progress-container" style="margin-top: 15px;">
+                        <div class="progress-bar" id="deploymentProgress"></div>
+                    </div>
+                </div>
+                <div id="endpointInfo" style="display: none;">
+                    <h3 style="margin-bottom: 15px; color: var(--primary);">API Endpoint</h3>
+                    <p>Your model has been successfully deployed and is ready to accept requests.</p>
+                    <div class="endpoint-card">
+                        <div style="font-weight: 600; margin-bottom: 5px;">Endpoint URL:</div>
+                        <div class="endpoint-url" id="apiEndpoint">https://api.genflow.ai/v1/models/llm-model-12345/predict</div>
+                        <div style="font-size: 14px; color: var(--gray); margin: 10px 0;">Authentication required with API key</div>
+                    </div>
+                    
+                    <h3 style="margin: 20px 0 15px; color: var(--primary);">Usage Examples</h3>
+                    <div style="margin-bottom: 15px;">
+                        <div style="font-weight: 600; margin-bottom: 5px;">Python:</div>
+                        <div class="usage-example">
+                            import requests<br>
+                            <br>
+                            url = "<span class="endpoint-url-placeholder">https://api.genflow.ai/v1/models/llm-model-12345/predict</span>"<br>
+                            headers = {<br>
+                            &nbsp;&nbsp;"Authorization": "Bearer YOUR_API_KEY",<br>
+                            &nbsp;&nbsp;"Content-Type": "application/json"<br>
+                            }<br>
+                            data = {<br>
+                            &nbsp;&nbsp;"input": "Your input text here"<br>
+                            }<br>
+                            <br>
+                            response = requests.post(url, json=data, headers=headers)<br>
+                            print(response.json())
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <div style="font-weight: 600; margin-bottom: 5px;">cURL:</div>
+                        <div class="usage-example">
+                            curl -X POST \<br>
+                            &nbsp;&nbsp;"<span class="endpoint-url-placeholder">https://api.genflow.ai/v1/models/llm-model-12345/predict</span>" \<br>
+                            &nbsp;&nbsp;-H "Authorization: Bearer YOUR_API_KEY" \<br>
+                            &nbsp;&nbsp;-H "Content-Type: application/json" \<br>
+                            &nbsp;&nbsp;-d '{"input": "Your input text here"}'
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get the training data from sessionStorage
+            const trainingData = JSON.parse(sessionStorage.getItem('modelTrainingData') || '{}');
+            
+            // Initialize the page
+            initTrainingPage(trainingData);
+        });
+
+        function initTrainingPage(trainingData) {
+            // Update the page with dataset info
+            document.getElementById('progressText').textContent = `Training LLM model on ${trainingData.filename || 'dataset'}`;
+            
+            // Add initial log entry
+            addLogEntry('Initializing LLM model training environment...', 'info');
+            addLogEntry(`Loaded dataset with ${trainingData.columns?.length || 0} columns and ${trainingData.data?.length || 0} rows`, 'info');
+            
+            // Start simulating the training process
+            simulateTrainingProcess();
+            
+            // Set up event listeners
+            document.getElementById('refreshBtn').addEventListener('click', function() {
+                addLogEntry('Manual refresh triggered', 'info');
+            });
+            
+            document.getElementById('exportReportBtn').addEventListener('click', function() {
+                alert('In a real implementation, this would export a PDF report');
+            });
+            
+            document.getElementById('clearLogsBtn').addEventListener('click', function() {
+                document.getElementById('trainingLogs').innerHTML = '';
+                addLogEntry('Logs cleared', 'info');
+            });
+        }
+
+        function addLogEntry(message, type = 'info') {
+            const logsContainer = document.getElementById('trainingLogs');
+            const logEntry = document.createElement('div');
+            logEntry.className = `log-entry log-${type}`;
+            
+            const timestamp = new Date().toLocaleTimeString();
+            logEntry.innerHTML = `<span style="color: #94a3b8;">[${timestamp}]</span> ${message}`;
+            
+            logsContainer.appendChild(logEntry);
+            logsContainer.scrollTop = logsContainer.scrollHeight;
+        }
+
+        function simulateTrainingProcess() {
+            let progress = 0;
+            const progressBar = document.getElementById('trainingProgress');
+            const progressPercent = document.getElementById('progressPercent');
+            const progressText = document.getElementById('progressText');
+            const trainingStatus = document.getElementById('trainingStatus');
+            const trainingMetrics = document.getElementById('trainingMetrics');
+            
+            // Initialize training chart
+            const ctx = document.getElementById('trainingChart').getContext('2d');
+            const trainingChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Training Loss',
+                            data: [],
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Validation Loss',
+                            data: [],
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Accuracy',
+                            data: [],
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: true,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Loss'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Accuracy'
+                            },
+                            min: 0,
+                            max: 1,
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Simulate training steps
+            const trainingInterval = setInterval(() => {
+                progress += Math.random() * 5;
+                if (progress > 100) progress = 100;
+                
+                progressBar.style.width = `${progress}%`;
+                progressPercent.textContent = `${Math.round(progress)}%`;
+                
+                // Update chart data
+                const epoch = trainingChart.data.labels.length + 1;
+                trainingChart.data.labels.push(`Epoch ${epoch}`);
+                
+                // Simulate loss values (decreasing)
+                const lastTrainLoss = trainingChart.data.datasets[0].data.length > 0 ? 
+                    trainingChart.data.datasets[0].data[trainingChart.data.datasets[0].data.length - 1] : 
+                    (2 + Math.random());
+                const trainLoss = Math.max(0.1, lastTrainLoss - (0.1 + Math.random() * 0.3));
+                trainingChart.data.datasets[0].data.push(trainLoss);
+                
+                const lastValLoss = trainingChart.data.datasets[1].data.length > 0 ? 
+                    trainingChart.data.datasets[1].data[trainingChart.data.datasets[1].data.length - 1] : 
+                    (2.2 + Math.random());
+                const valLoss = Math.max(0.1, lastValLoss - (0.05 + Math.random() * 0.2));
+                trainingChart.data.datasets[1].data.push(valLoss);
+                
+                // Simulate accuracy (increasing)
+                const lastAccuracy = trainingChart.data.datasets[2].data.length > 0 ? 
+                    trainingChart.data.datasets[2].data[trainingChart.data.datasets[2].data.length - 1] : 
+                    (0.1 + Math.random() * 0.2);
+                const accuracy = Math.min(0.98, lastAccuracy + (0.02 + Math.random() * 0.1));
+                trainingChart.data.datasets[2].data.push(accuracy);
+                
+                trainingChart.update();
+                
+                // Update logs and metrics at certain intervals
+                if (epoch % 2 === 0) {
+                    addLogEntry(`Epoch ${epoch}: train_loss=${trainLoss.toFixed(4)}, val_loss=${valLoss.toFixed(4)}, accuracy=${accuracy.toFixed(4)}`, 'info');
+                    
+                    // Update metrics
+                    trainingMetrics.innerHTML = `
+                        <div class="metric-card">
+                            <div class="metric-label">Epochs Completed</div>
+                            <div class="metric-value">${epoch}</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Training Loss</div>
+                            <div class="metric-value">${trainLoss.toFixed(4)}</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Validation Loss</div>
+                            <div class="metric-value">${valLoss.toFixed(4)}</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-label">Accuracy</div>
+                            <div class="metric-value">${(accuracy * 100).toFixed(2)}%</div>
+                        </div>
+                    `;
+                }
+                
+                // Randomly add some warnings or info
+                if (Math.random() > 0.8) {
+                    const messages = [
+                        'Adjusting learning rate based on validation performance',
+                        'Processing batch 32/128',
+                        'Computing gradients for transformer layers',
+                        'Applying gradient clipping',
+                        'Saving model checkpoint'
+                    ];
+                    addLogEntry(messages[Math.floor(Math.random() * messages.length)], 'info');
+                }
+                
+                // When training is complete
+                if (progress >= 100) {
+                    clearInterval(trainingInterval);
+                    progressText.textContent = 'Training complete!';
+                    trainingStatus.innerHTML = '<i class="fas fa-check-circle"></i><span>Training complete</span>';
+                    trainingStatus.className = 'status-badge status-success';
+                    
+                    addLogEntry('Training completed successfully', 'success');
+                    addLogEntry('Starting model deployment process...', 'info');
+                    
+                    // Show deployment panel
+                    document.getElementById('deploymentPanel').style.display = 'block';
+                    
+                    // Start deployment simulation
+                    simulateDeploymentProcess();
+                }
+            }, 1000);
+        }
+
+        function simulateDeploymentProcess() {
+            let progress = 0;
+            const deploymentProgress = document.getElementById('deploymentProgress');
+            const deploymentStatus = document.getElementById('deploymentStatus');
+            
+            const deploymentInterval = setInterval(() => {
+                progress += Math.random() * 10;
+                if (progress > 100) progress = 100;
+                
+                deploymentProgress.style.width = `${progress}%`;
+                
+                // Update logs
+                if (progress % 30 === 0) {
+                    const messages = [
+                        'Packaging model artifacts',
+                        'Uploading model to cloud storage',
+                        'Provisioning compute resources',
+                        'Deploying container image',
+                        'Configuring API gateway'
+                    ];
+                    addLogEntry(messages[Math.floor(progress / 30) - 1], 'info');
+                }
+                
+                // When deployment is complete
+                if (progress >= 100) {
+                    clearInterval(deploymentInterval);
+                    deploymentStatus.innerHTML = '<i class="fas fa-check-circle"></i><span>Deployed</span>';
+                    deploymentStatus.className = 'status-badge status-success';
+                    
+                    addLogEntry('Model deployed successfully!', 'success');
+                    addLogEntry('API endpoint is now active and ready to accept requests', 'success');
+                    
+                    // Show endpoint info
+                    document.getElementById('deploymentInfo').style.display = 'none';
+                    document.getElementById('endpointInfo').style.display = 'block';
+                    
+                    // Update all endpoint URLs in usage examples
+                    document.querySelectorAll('.endpoint-url-placeholder').forEach(el => {
+                        el.textContent = document.getElementById('apiEndpoint').textContent;
+                    });
+                }
+            }, 500);
+        }
+    </script>
+</body>
+</html>

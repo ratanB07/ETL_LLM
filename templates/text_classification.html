@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GENFLOW - Text Classification & Summarization</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #6366f1;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: var(--dark);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+            border-radius: 0 0 8px 8px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            background-color: white;
+            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 20px;
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 22px;
+            letter-spacing: 0.5px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .status-success {
+            background-color: var(--secondary);
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+        }
+
+        /* Main content */
+        .main-content {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .sidebar {
+            width: 280px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 16px;
+            height: fit-content;
+        }
+
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sidebar-title i {
+            color: var(--primary);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--dark);
+            margin-bottom: 8px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--gray-light);
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+        }
+
+        .select-control {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--gray-light);
+            border-radius: 6px;
+            font-size: 14px;
+            background-color: white;
+            cursor: pointer;
+        }
+
+        .button {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            width: 100%;
+        }
+
+        .button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(79, 70, 229, 0.2);
+        }
+
+        .button-secondary {
+            background: white;
+            color: var(--primary);
+            border: 1px solid var(--gray-light);
+        }
+
+        .button-secondary:hover {
+            background-color: #f8fafc;
+        }
+
+        .content-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Panel styles */
+        .panel {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-light);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-title i {
+            color: var(--primary);
+        }
+
+        .panel-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .panel-body {
+            padding: 20px;
+        }
+
+        /* Data preview */
+        .data-preview {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .preview-table th {
+            background-color: #f8fafc;
+            padding: 10px 12px;
+            text-align: left;
+            border: 1px solid var(--gray-light);
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .preview-table td {
+            padding: 10px 12px;
+            border: 1px solid var(--gray-light);
+            color: var(--dark);
+        }
+
+        .preview-table tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        /* Results section */
+        .results-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .result-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-light);
+            padding: 16px;
+        }
+
+        .result-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--primary);
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .result-content {
+            font-size: 14px;
+            line-height: 1.6;
+            color: var(--dark);
+        }
+
+        .result-content p {
+            margin-bottom: 10px;
+        }
+
+        /* Classification results */
+        .classification-results {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .category-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-light);
+            padding: 16px;
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .category-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .category-confidence {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--secondary);
+            background-color: rgba(16, 185, 129, 0.1);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .category-examples {
+            font-size: 13px;
+            color: var(--gray);
+            margin-top: 8px;
+        }
+
+        /* Charts */
+        .chart-container {
+            width: 100%;
+            height: 300px;
+            margin-top: 20px;
+        }
+
+        /* Stats cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-light);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .stat-title {
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Loading state */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            gap: 16px;
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(79, 70, 229, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        .loading-text {
+            font-size: 16px;
+            color: var(--gray);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 1024px) {
+            .main-content {
+                flex-direction: column;
+            }
+            
+            .sidebar {
+                width: 100%;
+            }
+            
+            .results-container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--gray-light);
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            font-weight: 500;
+            color: var(--gray);
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Token visualization */
+        .token-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 16px;
+        }
+
+        .token {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 13px;
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .token-importance {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            opacity: 0.3;
+        }
+
+        .token-importance.high {
+            opacity: 1;
+            background-color: var(--secondary);
+        }
+
+        .token-importance.medium {
+            opacity: 0.7;
+            background-color: var(--primary);
+        }
+
+        /* Sentiment indicators */
+        .sentiment-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 8px;
+        }
+
+        .sentiment-bar {
+            height: 8px;
+            border-radius: 4px;
+            background-color: #e2e8f0;
+            flex-grow: 1;
+            overflow: hidden;
+        }
+
+        .sentiment-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ef4444, #f59e0b, #10b981);
+        }
+
+        .sentiment-marker {
+            width: 2px;
+            height: 12px;
+            background-color: var(--dark);
+            position: absolute;
+            top: -2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon">G</div>
+            <div class="logo-text">GENFLOW</div>
+        </div>
+        <div class="status-indicator">
+            <div class="status-dot status-success"></div>
+            <span>LLM Analysis Active</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="main-content">
+            <div class="sidebar">
+                <div class="sidebar-title">
+                    <i class="fas fa-cog"></i>
+                    Configuration
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Text Column</label>
+                    <select class="select-control" id="textColumn">
+                        <option value="">Select text column</option>
+                        <!-- Dynamically populated -->
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Task Type</label>
+                    <select class="select-control" id="taskType">
+                        <option value="classification">Text Classification</option>
+                        <option value="sentiment">Sentiment Analysis</option>
+                        <option value="summarization">Text Summarization</option>
+                        <option value="ner">Named Entity Recognition</option>
+                        <option value="all">All Tasks</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">LLM Model</label>
+                    <select class="select-control" id="llmModel">
+                        <option value="gpt-4">GPT-4</option>
+                        <option value="gpt-3.5">GPT-3.5 Turbo</option>
+                        <option value="llama2">Llama 2</option>
+                        <option value="claude">Claude 2</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Sample Size</label>
+                    <input type="number" class="form-control" id="sampleSize" value="100" min="1" max="1000">
+                </div>
+
+                <button class="button" id="analyzeButton">
+                    <i class="fas fa-play"></i>
+                    Analyze Text
+                </button>
+
+                <button class="button button-secondary" id="exportButton" style="margin-top: 10px;">
+                    <i class="fas fa-file-export"></i>
+                    Export Results
+                </button>
+            </div>
+
+            <div class="content-area">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fas fa-table"></i>
+                            Data Preview
+                        </div>
+                        <div class="panel-actions">
+                            <span id="rowCount">0 rows loaded</span>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="data-preview">
+                            <table class="preview-table" id="previewTable">
+                                <thead>
+                                    <tr>
+                                        <!-- Dynamically populated -->
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Dynamically populated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel" id="resultsPanel" style="display: none;">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fas fa-chart-bar"></i>
+                            Analysis Results
+                        </div>
+                        <div class="panel-actions">
+                            <span id="processingTime">Processed in 0s</span>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div class="tabs">
+                            <div class="tab active" data-tab="summary">Summary</div>
+                            <div class="tab" data-tab="classification">Classification</div>
+                            <div class="tab" data-tab="sentiment">Sentiment</div>
+                            <div class="tab" data-tab="entities">Entities</div>
+                        </div>
+
+                        <div class="tab-content active" data-tab-content="summary">
+                            <div class="stats-grid">
+                                <div class="stat-card">
+                                    <div class="stat-title">Total Documents</div>
+                                    <div class="stat-value" id="totalDocuments">0</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-title">Categories Found</div>
+                                    <div class="stat-value" id="categoriesFound">0</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-title">Avg. Sentiment</div>
+                                    <div class="stat-value" id="avgSentiment">0.0</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-title">Entities Identified</div>
+                                    <div class="stat-value" id="entitiesIdentified">0</div>
+                                </div>
+                            </div>
+
+                            <div class="result-card">
+                                <div class="result-title">
+                                    <i class="fas fa-file-alt"></i>
+                                    Summary Insights
+                                </div>
+                                <div class="result-content" id="summaryInsights">
+                                    <!-- Dynamically populated -->
+                                </div>
+                            </div>
+
+                            <div class="chart-container">
+                                <canvas id="categoryChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="tab-content" data-tab-content="classification">
+                            <div class="result-card">
+                                <div class="result-title">
+                                    <i class="fas fa-tags"></i>
+                                    Text Classification
+                                </div>
+                                <div class="result-content">
+                                    <p>The following categories were identified in the text data with their confidence levels:</p>
+                                </div>
+                            </div>
+
+                            <div class="classification-results" id="classificationResults">
+                                <!-- Dynamically populated -->
+                            </div>
+
+                            <div class="chart-container">
+                                <canvas id="confidenceChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="tab-content" data-tab-content="sentiment">
+                            <div class="result-card">
+                                <div class="result-title">
+                                    <i class="fas fa-smile"></i>
+                                    Sentiment Analysis
+                                </div>
+                                <div class="result-content">
+                                    <p>Sentiment scores range from -1 (negative) to 1 (positive):</p>
+                                    <div class="sentiment-indicator">
+                                        <span style="color: #ef4444;">Negative</span>
+                                        <div class="sentiment-bar">
+                                            <div class="sentiment-fill"></div>
+                                        </div>
+                                        <span style="color: #10b981;">Positive</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="chart-container">
+                                <canvas id="sentimentChart"></canvas>
+                            </div>
+
+                            <div class="result-card" style="margin-top: 20px;">
+                                <div class="result-title">
+                                    <i class="fas fa-comment-alt"></i>
+                                    Sentiment Examples
+                                </div>
+                                <div class="result-content" id="sentimentExamples">
+                                    <!-- Dynamically populated -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="tab-content" data-tab-content="entities">
+                            <div class="result-card">
+                                <div class="result-title">
+                                    <i class="fas fa-building"></i>
+                                    Named Entities
+                                </div>
+                                <div class="result-content">
+                                    <p>Key entities extracted from the text:</p>
+                                </div>
+                            </div>
+
+                            <div class="chart-container">
+                                <canvas id="entityChart"></canvas>
+                            </div>
+
+                            <div class="result-card" style="margin-top: 20px;">
+                                <div class="result-title">
+                                    <i class="fas fa-list-ul"></i>
+                                    Entity Types
+                                </div>
+                                <div class="result-content" id="entityTypes">
+                                    <!-- Dynamically populated -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel" id="loadingPanel" style="display: none;">
+                    <div class="panel-body">
+                        <div class="loading">
+                            <div class="loading-spinner"></div>
+                            <div class="loading-text">Processing text with LLM...</div>
+                            <div id="progressText">Analyzing document 1 of 100</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get data from parent window
+        const urlParams = new URLSearchParams(window.location.search);
+        const data = JSON.parse(decodeURIComponent(urlParams.get('data')));
+        const columns = JSON.parse(decodeURIComponent(urlParams.get('columns')));
+        const filename = urlParams.get('filename');
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize UI with data
+            initializeDataPreview();
+            setupEventListeners();
+        });
+
+        function initializeDataPreview() {
+            // Populate text column dropdown
+            const textColumnSelect = document.getElementById('textColumn');
+            columns.forEach(col => {
+                const option = document.createElement('option');
+                option.value = col;
+                option.textContent = col;
+                textColumnSelect.appendChild(option);
+            });
+
+            // Set default text column (look for common text column names)
+            const textColumns = ['text', 'content', 'description', 'comment', 'review'];
+            for (const col of textColumns) {
+                if (columns.includes(col)) {
+                    textColumnSelect.value = col;
+                    break;
+                }
+            }
+
+            // Populate preview table
+            const tableHead = document.querySelector('#previewTable thead tr');
+            const tableBody = document.querySelector('#previewTable tbody');
+
+            // Add headers
+            columns.slice(0, 5).forEach(col => {
+                const th = document.createElement('th');
+                th.textContent = col;
+                tableHead.appendChild(th);
+            });
+
+            // Add sample rows (first 5 rows)
+            const sampleData = data.slice(0, 5);
+            sampleData.forEach(row => {
+                const tr = document.createElement('tr');
+                columns.slice(0, 5).forEach(col => {
+                    const td = document.createElement('td');
+                    td.textContent = row[col] !== undefined ? String(row[col]).substring(0, 50) + (String(row[col]).length > 50 ? '...' : '') : '';
+                    tr.appendChild(td);
+                });
+                tableBody.appendChild(tr);
+            });
+
+            // Update row count
+            document.getElementById('rowCount').textContent = `${data.length} rows loaded`;
+        }
+
+        function setupEventListeners() {
+            // Tab switching
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const tabName = this.getAttribute('data-tab');
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    document.querySelector(`.tab-content[data-tab-content="${tabName}"]`).classList.add('active');
+                });
+            });
+
+            // Analyze button
+            document.getElementById('analyzeButton').addEventListener('click', function() {
+                const textColumn = document.getElementById('textColumn').value;
+                const taskType = document.getElementById('taskType').value;
+                const llmModel = document.getElementById('llmModel').value;
+                const sampleSize = parseInt(document.getElementById('sampleSize').value);
+
+                if (!textColumn) {
+                    alert('Please select a text column to analyze');
+                    return;
+                }
+
+                startAnalysis(textColumn, taskType, llmModel, sampleSize);
+            });
+
+            // Export button
+            document.getElementById('exportButton').addEventListener('click', function() {
+                exportResults();
+            });
+        }
+
+        function startAnalysis(textColumn, taskType, llmModel, sampleSize) {
+            // Show loading panel
+            document.getElementById('resultsPanel').style.display = 'none';
+            document.getElementById('loadingPanel').style.display = 'block';
+
+            // Simulate analysis (in a real app, this would call an API)
+            setTimeout(() => {
+                simulateAnalysisResults(textColumn, taskType, sampleSize);
+            }, 1000);
+
+            // Simulate progress updates
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 5;
+                document.getElementById('progressText').textContent = 
+                    `Analyzing document ${Math.min(progress, sampleSize)} of ${sampleSize}`;
+                
+                if (progress >= sampleSize) {
+                    clearInterval(progressInterval);
+                }
+            }, 200);
+        }
+
+        function simulateAnalysisResults(textColumn, taskType, sampleSize) {
+            // Hide loading panel
+            document.getElementById('loadingPanel').style.display = 'none';
+            document.getElementById('resultsPanel').style.display = 'block';
+
+            // Generate mock results based on the data
+            const textData = data.slice(0, sampleSize).map(row => row[textColumn]);
+            
+            // Generate categories
+            const categories = [
+                { name: "Customer Feedback", confidence: 0.92, examples: ["Great service!", "Very satisfied with the product"] },
+                { name: "Product Inquiry", confidence: 0.85, examples: ["How do I use this feature?", "What's the return policy?"] },
+                { name: "Technical Issue", confidence: 0.78, examples: ["The app keeps crashing", "I can't log in to my account"] },
+                { name: "Billing Question", confidence: 0.75, examples: ["Why was I charged twice?", "When will my subscription renew?"] },
+                { name: "Feature Request", confidence: 0.68, examples: ["Please add dark mode", "Can you support more file formats?"] }
+            ];
+
+            // Generate sentiment scores (-1 to 1)
+            const sentimentScores = textData.map(() => (Math.random() * 2) - 1);
+            const avgSentiment = sentimentScores.reduce((a, b) => a + b, 0) / sentimentScores.length;
+
+            // Generate named entities
+            const entities = [
+                { name: "Product Names", count: 24, examples: ["Model X", "Premium Package"] },
+                { name: "People", count: 18, examples: ["John Smith", "Support Team"] },
+                { name: "Locations", count: 12, examples: ["New York", "London Office"] },
+                { name: "Organizations", count: 9, examples: ["Acme Corp", "Tech Solutions Inc"] },
+                { name: "Dates", count: 15, examples: ["January 2023", "next Tuesday"] }
+            ];
+
+            // Update UI with results
+            document.getElementById('totalDocuments').textContent = sampleSize;
+            document.getElementById('categoriesFound').textContent = categories.length;
+            document.getElementById('avgSentiment').textContent = avgSentiment.toFixed(2);
+            document.getElementById('entitiesIdentified').textContent = entities.reduce((sum, e) => sum + e.count, 0);
+            document.getElementById('processingTime').textContent = `Processed in ${sampleSize * 0.1}s`;
+
+            // Update summary insights
+            const summaryInsights = document.getElementById('summaryInsights');
+            summaryInsights.innerHTML = `
+                <p>The analysis of ${sampleSize} text documents revealed ${categories.length} main categories of content. </p>
+                <p>The overall sentiment of the text is <strong>${getSentimentLabel(avgSentiment)}</strong> with an average score of ${avgSentiment.toFixed(2)}.</p>
+                <p>Key entities were identified including products, people, and locations that appear frequently in the text.</p>
+                <p>The most common category was <strong>${categories[0].name}</strong> appearing in ${Math.round(categories[0].confidence * 100)}% of analyzed documents.</p>
+            `;
+
+            // Update classification results
+            const classificationResults = document.getElementById('classificationResults');
+            classificationResults.innerHTML = '';
+            categories.forEach(category => {
+                const categoryCard = document.createElement('div');
+                categoryCard.className = 'category-card';
+                categoryCard.innerHTML = `
+                    <div class="category-header">
+                        <div class="category-name">
+                            <i class="fas fa-tag"></i>
+                            ${category.name}
+                        </div>
+                        <div class="category-confidence">
+                            ${(category.confidence * 100).toFixed(0)}% confidence
+                        </div>
+                    </div>
+                    <div class="category-examples">
+                        <strong>Examples:</strong> ${category.examples.join(', ')}
+                    </div>
+                `;
+                classificationResults.appendChild(categoryCard);
+            });
+
+            // Update sentiment examples
+            const sentimentExamples = document.getElementById('sentimentExamples');
+            sentimentExamples.innerHTML = `
+                <p><strong>Positive Example:</strong> "${getRandomText(textData)}"</p>
+                <p><strong>Neutral Example:</strong> "${getRandomText(textData)}"</p>
+                <p><strong>Negative Example:</strong> "${getRandomText(textData)}"</p>
+            `;
+
+            // Update entity types
+            const entityTypes = document.getElementById('entityTypes');
+            entityTypes.innerHTML = '';
+            entities.forEach(entity => {
+                const entityItem = document.createElement('div');
+                entityItem.style.marginBottom = '10px';
+                entityItem.innerHTML = `
+                    <div style="font-weight: 500;">${entity.name} (${entity.count})</div>
+                    <div style="font-size: 13px; color: var(--gray);">Examples: ${entity.examples.join(', ')}</div>
+                `;
+                entityTypes.appendChild(entityItem);
+            });
+
+            // Create charts
+            createCategoryChart(categories);
+            createSentimentChart(sentimentScores);
+            createEntityChart(entities);
+        }
+
+        function getSentimentLabel(score) {
+            if (score > 0.6) return 'Very Positive';
+            if (score > 0.2) return 'Positive';
+            if (score > -0.2) return 'Neutral';
+            if (score > -0.6) return 'Negative';
+            return 'Very Negative';
+        }
+
+        function getRandomText(textData) {
+            return textData[Math.floor(Math.random() * textData.length)] || "Sample text not available";
+        }
+
+        function createCategoryChart(categories) {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: categories.map(c => c.name),
+                    datasets: [{
+                        label: 'Confidence %',
+                        data: categories.map(c => c.confidence * 100),
+                        backgroundColor: '#4f46e5',
+                        borderColor: '#4338ca',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Confidence %'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function createSentimentChart(sentimentScores) {
+            // Categorize scores
+            const bins = {
+                'Very Negative (≤ -0.6)': 0,
+                'Negative (-0.6 to -0.2)': 0,
+                'Neutral (-0.2 to 0.2)': 0,
+                'Positive (0.2 to 0.6)': 0,
+                'Very Positive (≥ 0.6)': 0
+            };
+
+            sentimentScores.forEach(score => {
+                if (score <= -0.6) bins['Very Negative (≤ -0.6)']++;
+                else if (score <= -0.2) bins['Negative (-0.6 to -0.2)']++;
+                else if (score <= 0.2) bins['Neutral (-0.2 to 0.2)']++;
+                else if (score <= 0.6) bins['Positive (0.2 to 0.6)']++;
+                else bins['Very Positive (≥ 0.6)']++;
+            });
+
+            const ctx = document.getElementById('sentimentChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: Object.keys(bins),
+                    datasets: [{
+                        data: Object.values(bins),
+                        backgroundColor: [
+                            '#ef4444',
+                            '#f59e0b',
+                            '#64748b',
+                            '#3b82f6',
+                            '#10b981'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+        }
+
+        function createEntityChart(entities) {
+            const ctx = document.getElementById('entityChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: entities.map(e => e.name),
+                    datasets: [{
+                        data: entities.map(e => e.count),
+                        backgroundColor: [
+                            '#4f46e5',
+                            '#8b5cf6',
+                            '#ec4899',
+                            '#f59e0b',
+                            '#10b981'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+        }
+
+        function exportResults() {
+            alert('Results exported successfully!');
+            // In a real app, this would generate a CSV/PDF report
+        }
+    </script>
+</body>
+</html>

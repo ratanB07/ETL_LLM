@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ETL with LLM - Time Series Forecasting</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #6366f1;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: var(--dark);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            background-color: white;
+            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 20px;
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 22px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            margin: 20px 0;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-light);
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .panel:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-body {
+            padding: 20px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-light);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .stat-title {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #f8fafc;
+            padding: 10px 12px;
+            text-align: left;
+            border: 1px solid var(--gray-light);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        td {
+            padding: 10px 12px;
+            border: 1px solid var(--gray-light);
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8fafc;
+        }
+
+        tr:hover {
+            background-color: #eef2ff;
+        }
+
+        .log-entry {
+            display: flex;
+            gap: 15px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--gray-light);
+            font-size: 14px;
+            transition: background-color 0.2s ease;
+        }
+
+        .log-entry:hover {
+            background-color: #f8fafc;
+        }
+
+        .log-time {
+            color: var(--gray);
+            min-width: 80px;
+        }
+
+        .log-message {
+            flex-grow: 1;
+        }
+
+        .log-level {
+            font-weight: 500;
+            min-width: 80px;
+        }
+
+        .log-level-info {
+            color: var(--info);
+        }
+
+        .log-level-success {
+            color: var(--secondary);
+        }
+
+        .log-level-warning {
+            color: var(--warning);
+        }
+
+        .log-level-error {
+            color: var(--danger);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(0,0,0,0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .button {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+        }
+
+        .button:active {
+            transform: translateY(0);
+            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+        }
+
+        .button-secondary {
+            background: white;
+            color: var(--primary);
+            border: 1px solid var(--gray-light);
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--gray-light);
+            margin-bottom: 20px;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .tab {
+            padding: 12px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .tab:hover {
+            background-color: #f8fafc;
+            color: var(--primary);
+        }
+
+        .tab.active {
+            border-bottom-color: var(--primary);
+            color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .forecast-highlight {
+            background-color: #f0fdf4;
+            border-left: 4px solid var(--secondary);
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 0 8px 8px 0;
+            transition: all 0.3s ease;
+        }
+
+        .forecast-highlight:hover {
+            transform: translateX(4px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .forecast-highlight-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--dark);
+        }
+
+        .forecast-highlight-content {
+            color: var(--gray);
+            line-height: 1.5;
+        }
+
+        .model-config {
+            background-color: #eff6ff;
+            border-left: 4px solid var(--info);
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 0 8px 8px 0;
+            transition: all 0.3s ease;
+        }
+
+        .model-config:hover {
+            transform: translateX(4px);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .badge-primary {
+            background-color: #e0e7ff;
+            color: var(--primary);
+        }
+
+        .badge-success {
+            background-color: #d1fae5;
+            color: var(--secondary);
+        }
+
+        .badge-warning {
+            background-color: #fef3c7;
+            color: var(--warning);
+        }
+
+        .badge-info {
+            background-color: #dbeafe;
+            color: var(--info);
+        }
+
+        .grid-2col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .grid-2col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 8px;
+            background-color: var(--gray-light);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .prompt-box {
+            background-color: #fdf2f8;
+            border-left: 4px solid #db2777;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .prompt-box-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .prompt-box-content {
+            color: var(--gray);
+            line-height: 1.5;
+            font-family: monospace;
+            white-space: pre-wrap;
+            padding: 12px;
+            background-color: #fff1f2;
+            border-radius: 6px;
+            border: 1px solid #fecdd3;
+        }
+
+        .dataset-info {
+            background-color: #f0f9ff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 1px solid #bae6fd;
+        }
+
+        .anomaly-point {
+            background-color: rgba(239, 68, 68, 0.5);
+            border: 2px solid #ef4444;
+            border-radius: 50%;
+        }
+
+        .tooltip-card {
+            background-color: white;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 10px;
+            border: 1px solid var(--gray-light);
+            min-width: 200px;
+        }
+
+        .tooltip-detail {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 4px;
+        }
+
+        .tooltip-label {
+            color: var(--gray);
+            font-size: 12px;
+        }
+
+        .tooltip-value {
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(79, 70, 229, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+        }
+
+        .slide-in {
+            animation: slideIn 0.5s ease;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .etl-process-steps {
+            position: relative;
+            margin: 15px 0;
+        }
+
+        .etl-step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .etl-step::before {
+            content: '';
+            position: absolute;
+            left: 8px;
+            top: 28px;
+            height: calc(100% - 16px);
+            width: 2px;
+            background-color: var(--gray-light);
+        }
+
+        .etl-step:last-child::before {
+            display: none;
+        }
+
+        .etl-step-number {
+            position: absolute;
+            left: 0;
+            top: 3px;
+            background-color: var(--primary);
+            color: white;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .etl-step-content {
+            flex-grow: 1;
+        }
+
+        .etl-step-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .etl-step-description {
+            color: var(--gray);
+            font-size: 14px;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon">ETL</div>
+            <div class="logo-text">ETL with LLM</div>
+        </div>
+        <div style="font-size: 16px; font-weight: 500;">Time Series Forecasting</div>
+    </div>
+
+    <div class="container">
+        <h1 class="section-title slide-in">
+            <i class="fas fa-chart-line"></i>
+            Time Series Forecasting with LLM
+        </h1>
+
+        <div class="dataset-info slide-in">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <div style="font-weight: 600; font-size: 16px;">
+                    <i class="fas fa-table"></i> Dataset Information
+                </div>
+                <span id="recordCount" class="badge badge-info">0 records</span>
+            </div>
+            <div id="datasetDetails" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                <!-- Will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" onclick="switchTab('forecast')">Forecast Results</div>
+            <div class="tab" onclick="switchTab('prompt')">LLM Prompt & Analysis</div>
+            <div class="tab" onclick="switchTab('model')">Model Configuration</div>
+            <div class="tab" onclick="switchTab('logs')">Execution Logs</div>
+            <div class="tab" onclick="switchTab('etl')">ETL Process</div>
+        </div>
+
+        <div id="forecastTab" class="tab-content active">
+            <div class="panel slide-in">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-chart-line"></i>
+                        Forecast Visualization
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <select id="chartType" class="button button-secondary" style="padding: 8px 12px;">
+                            <option value="line">Line Chart</option>
+                            <option value="bar">Bar Chart</option>
+                            <option value="area">Area Chart</option>
+                        </select>
+                        <select id="forecastColumn" class="button button-secondary" style="padding: 8px 12px;">
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="chart-container">
+                        <canvas id="forecastChart"></canvas>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-title">Forecast Horizon</div>
+                            <div class="stat-value" id="forecastHorizon">7 days</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-title">Confidence Interval</div>
+                            <div class="stat-value" id="confidenceInterval">95%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-title">Model Accuracy</div>
+                            <div class="stat-value" id="modelAccuracy">92.4%</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-title">Data Points</div>
+                            <div class="stat-value" id="dataPoints">1,245</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel slide-in">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-lightbulb"></i>
+                        LLM Insights
+                    </div>
+                    <button id="regenerateInsights" class="button button-secondary">
+                        <i class="fas fa-sync-alt"></i>
+                        Regenerate Insights
+                    </button>
+                </div>
+                <div class="panel-body">
+                    <div class="forecast-highlight">
+                        <div class="forecast-highlight-title">Key Trend Identification</div>
+                        <div class="forecast-highlight-content" id="trendInsight">
+                            <span class="loading-spinner"></span> Generating insights...
+                        </div>
+                    </div>
+                    <div class="forecast-highlight">
+                        <div class="forecast-highlight-title">Anomaly Detection</div>
+                        <div class="forecast-highlight-content" id="anomalyInsight">
+                            <span class="loading-spinner"></span> Analyzing anomalies...
+                        </div>
+                    </div>
+                    <div class="forecast-highlight">
+                        <div class="forecast-highlight-title">ETL Impact Analysis</div>
+                        <div class="forecast-highlight-content" id="etlInsight">
+                            <span class="loading-spinner"></span> Evaluating ETL impact...
+                        </div>
+                    </div>
+                    <div class="forecast-highlight">
+                        <div class="forecast-highlight-title">Forecast Recommendation</div>
+                        <div class="forecast-highlight-content" id="recommendationInsight">
+                            <span class="loading-spinner"></span> Preparing recommendations...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel slide-in">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-table"></i>
+                        Forecast Data
+                    </div>
+                    <button class="button button-secondary" onclick="exportForecastData()">
+                        <i class="fas fa-download"></i>
+                        Export
+                    </button>
+                </div>
+                <div class="panel-body">
+                    <div class="table-container">
+                        <table id="forecastTable">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Forecast</th>
+                                    <th>Lower Bound</th>
+                                    <th>Upper Bound</th>
+                                    <th>Confidence</th>
+                                    <th>% Change</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="promptTab" class="tab-content">
+            <div class="panel slide-in">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-robot"></i>
+                        LLM Input Prompt
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="prompt-box">
+                        <div class="prompt-box-title">
+                            <i class="fas fa-terminal"></i>
+                            Generated Prompt for Time Series Analysis
+                        </div>
+                        <div class="prompt-box-content" id="llmInputPrompt">
+                            Analyzing dataset with time series forecasting...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel slide-in">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-brain"></i>
+                        LLM Analysis Process
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="etl-process-steps">
+                        <div class="etl-step">
+                            <div class="etl-step-number">1</div>
+                            <div class="etl-step-content">
+                                <div class="etl-step-title">Data Understanding & Preprocessing</div>
+                                <div class="etl-step-description">
+                                    The LLM analyzes the dataset structure, identifies time-based columns, and determines appropriate forecasting techniques based on data characteristics.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="etl-step">
+                            <div class="etl-step-number">2</div>
+                            <div class="etl-step-content">
+                                <div class="etl-step-title">Feature Engineering & Transformation</div>
+                                <div class="etl-step-description">
+                                    Temporal features are extracted and processed to enhance the forecasting model's ability to detect patterns and seasonality.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="etl-step">
+                            <div class="etl-step-number">3</div>
+                            <div class="etl-step-content">
+                                <div class="etl-step-title">Model Training & Evaluation</div>
+                                <div class="etl-step-description">
+                                    The LLM applies time series forecasting algorithms, evaluates different models, and selects the best performing approach for your specific data.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="etl-step">
+                            <div class="etl-step-number">4</div>
+                            <div class="etl-step-content">
+                                <div class="etl-step-title">Forecast Generation & Interpretation</div>
+                                <div class="etl-step-description">
+                                    Future values are predicted with confidence intervals, and the LLM provides natural language insights about trends, anomalies, and recommendations.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel slide-in">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-file-alt"></i>
+                        LLM Response Output
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="prompt-box" style="background-color: #f0fdf4; border-left-color: #10b981;">
+                        <div class="prompt-box-title">
+                            <i class="fas fa-comment-dots"></i>
+                            LLM Model Response
+                        </div>
+                        <div class="prompt-box-content" id="llmResponseOutput" style="background-color: #ecfdf5; border-color: #a7f3d0;">
+                            Processing model response...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="modelTab" class="tab-content">
+            <div class="panel slide-in">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-cogs"></i>
+                        Model Configuration
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="model-config">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                            <div>
+                                <div style="font-size: 14px; color: var(--gray);">Model Type</div>
+                                <div style="font-size: 18px; font-weight: 600;">LLM-Enhanced Time Series Transformer</div>
+                            </div>
+                            <span id="modelComplexityBadge" class="badge badge-primary">Advanced</span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+                            <div>
+                                <div style="font-size: 14px; color: var(--gray);">Forecast Horizon</div>
+                                <div id="horizonValue" style="font-size: 16px; font-weight: 500;">7 days</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 14px; color: var(--gray);">Context Window</div>
+                                <div style="font-size: 16px; font-weight: 500;">8,192 tokens</div>
+                            </div>
+                            <div>
+                                <div style="font-size: 14px; color: var(--gray);">Training Epochs</div>
+                                <div style="font-size: 16px; font-weight: 500;">75</div>
+                            </div>
+                        </div>
+                        <div>
+                            <div style="font-size: 14px; color: var(--gray); margin-bottom: 8px;">Model Description</div>
+                            <div style="line-height: 1.6;">
+                                This hybrid model combines transformer architecture with specialized time series components, 
+                                leveraging the LLM's pattern recognition capabilities to enhance traditional statistical forecasting. 
+                                The model incorporates both short-term patterns and long-range dependencies found in the ETL workflow data.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel" style="margin-top: 20px;">
+                        <div class="panel-header">
+                            <div class="panel-title">
+                                <i class="fas fa-sliders-h"></i>
+                                Parameters
+                            </div>
+                        </div>
+                        <div class="panel-body">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                                <div>
+                                    <label style="display: block; margin-bottom: 5px; font-weight: 500;">Forecast Period (days)</label>
+                                    <input type="number" id="forecastPeriod" value="7" min="1" max="30" 
+                                           style="width: 100%; padding: 8px 12px; border: 1px solid var(--gray-light); border-radius: 6px;">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 5px; font-weight: 500;">Confidence Level (%)</label>
+                                    <input type="number" id="confidenceLevel" value="95" min="1" max="99" 
+                                           style="width: 100%; padding: 8px 12px; border: 1px solid var(--gray-light); border-radius: 6px;">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 5px; font-weight: 500;">Seasonality Period</label>
+                                    <select id="seasonalityPeriod" style="width: 100%; padding: 8px 12px; border: 1px solid var(--gray-light); border-radius: 6px;">
+                                        <option value="daily">Daily</option>
+                                        <option value="weekly" selected>Weekly</option>
+                                        <option value="monthly">Monthly</option>
+                                        <option value="quarterly">Quarterly</option>
+                                        <option value="yearly">Yearly</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 5px; font-weight: 500;">Forecast Method</label>
+                                    <select id="forecastMethod" style="width: 100%; padding: 8px 12px; border: 1px solid var(--gray-light); border-radius: 6px;">
+                                        <option value="llm">LLM Enhanced</option>
+                                        <option value="arima">ARIMA</option>
+                                        <option value="prophet">Prophet</option>
+                                        <option value="lstm">LSTM</option>
+                                        <option value="ensemble">Ensemble</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <button id="updateModel" class="button" style="width: 100%;">
+                                <i class="fas fa-sync"></i>
+                                Update Model & Regenerate Forecast
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="grid-2col" style="margin-top: 20px;">
+                        <div class="panel">
+                            <div class="panel-header">
+                                <div class="panel-title">
+                                    <i class="fas fa-chart-bar"></i>
+                                    Model Performance
+                                </div>
+                            </div>
+                            <div class="panel-body">
+                                <div style="margin-bottom: 15px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                        <span>Mean Absolute Error (MAE)</span>
+                                        <span>2.34</span>
+                                    </div>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar" style="width: 82%;"></div>
+                                    </div>
+                                </div>
+                                <div style="margin-bottom: 15px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                        <span>Mean Squared Error (MSE)</span>
+                                        <span>8.91</span>
+                                    </div>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar" style="width: 78%;"></div>
+                                    </div>
+                                </div>
+                                <div style="margin-bottom: 15px;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                        <span>R² Score</span>
+                                        <span>0.89</span>
+                                    </div>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar" style="width: 89%;"></div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                        <span>MAPE</span>
+                                        <span>3.17%</span>
+                                    </div>
+                                    <div class="progress-bar-container">
+                                        <div class="progress-bar" style="width: 92%;"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel">
+                            <div class="panel-header">
+                                <div class="panel-title">
+                                    <i class="fas fa-code"></i>
+                                    Advanced Options
+                                </div>
+                            </div>
+                            <div class="panel-body">
+                                <div style="margin-bottom: 15px;">
+                                    <label style="display: block; margin-bottom: 5px; font-weight: 500;">Anomaly Detection Threshold</label>
+                                    <input type="range" id="anomalyThreshold" min="1" max="5" step="0.1" value="2.5" 
+                                           style="width: 100%; margin-bottom: 5px;">
+                                    <div style="display: flex; justify-content: space-between;">
+                                        <span>Lower (More Sensitive)</span>
+                                        <span id="anomalyThresholdValue">2.5 σ</span>
+                                        <span>Higher (Less Sensitive)</span>
+                                    </div>
+                                </div>
+
+                                <div style="margin-bottom: 15px;">
+                                    <label style="display: block; margin-bottom: 10px; font-weight: 500;">Enable Features</label>
+                                    <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+                                        <label style="display: flex; align-items: center; gap: 5px;">
+                                            <input type="checkbox" checked>
+                                            Anomaly Detection
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 5px;">
+                                            <input type="checkbox" checked>
+                                            Confidence Intervals
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 5px;">
+                                            <input type="checkbox" checked>
+                                            Trend Analysis
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 5px;">
+                                            <input type="checkbox" checked>
+                                            Seasonality
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <button class="button button-secondary" style="width: 100%;">
+                                        <i class="fas fa-download"></i>
+                                        Export Model Config
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="logsTab" class="tab-content">
+            <div class="panel slide-in">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-terminal"></i>
+                        Execution Logs
+                    </div>
+                    <button class="button button-secondary" onclick="clearLogs()">
+                        <i class="fas fa-eraser"></i>
+                        Clear Logs
+                    </button>
+                </div>
+                <div class="panel-body">
+                    <div id="logEntries" style="max-height: 400px; overflow-y: auto;">
+                        <!-- Logs will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="etlTab" class="tab-content">
+            <div class="panel slide-in">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-exchange-alt"></i>
+                        ETL Process Overview
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="etl-process-steps">
+                        <div class="etl-step">
+                            <div class="etl-step-number">1</div>
+                            <div class="etl-step-content">
+                                <div class="etl-step-title">Extract: Raw Data Collection</div>
+                                <div class="etl-step-description">
+                                    Time series data is extracted from source systems, databases, APIs, or file uploads. 
+                                    The system identifies temporal columns and prepares the data for processing.
+                                </div>
+                            </div>
+                        </div>
+                        <div class="etl-step">
+                            <div class="etl-step-number">2</div>
+                            <div class="etl-step-content">
+                                <div class="etl-step-title">Transform: LLM-Enhanced Processing</div>
+                                <div class="etl-step-description">
+                                    The large language model analyzes and transforms the data by:
+                                    <ul style="margin-top: 8px; margin-left: 20px;">
+                                        <li>Identifying and handling missing values</li>
+                                        <li>Detecting outliers and anomalies</li>
+                                        <li>Extracting temporal features (day of week, month, etc.)</li>
+                                        <li>Normalizing data for forecasting</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="etl-step">
+                            <div class="etl-step-number">3</div>
+                            <div class="etl-step-content">
+                                <div class="etl-step-title">Load: Forecast Generation</div>
+                                <div class="etl-step-description">
+                                    The processed data is loaded into the forecasting engine which:
+                                    <ul style="margin-top: 8px; margin-left: 20px;">
+                                        <li>Applies time series forecasting models</li>
+                                        <li>Generates predictions with confidence intervals</li>
+                                        <li>Creates visualization-ready datasets</li>
+                                        <li>Prepares insights and recommendations</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel slide-in">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-clock"></i>
+                        ETL Status & Metrics
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));">
+                        <div class="stat-card">
+                            <div class="stat-title">Last ETL Run</div>
+                            <div class="stat-value" style="font-size: 16px;">May 10, 2025 14:32</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-title">Processing Time</div>
+                            <div class="stat-value">8.4s</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-title">Data Points Processed</div>
+                            <div class="stat-value">1,245</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-title">Forecasts Generated</div>
+                            <div class="stat-value">7</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-title">ETL Status</div>
+                            <div class="stat-value" style="color: var(--secondary);">Success</div>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px;">
+                        <div style="font-weight: 600; margin-bottom: 10px;">ETL Pipeline Health</div>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                            <div style="margin-bottom: 15px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span>Data Quality Score</span>
+                                    <span>94%</span>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar" style="width: 94%;"></div>
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span>Pipeline Efficiency</span>
+                                    <span>87%</span>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar" style="width: 87%;"></div>
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span>Missing Data Handling</span>
+                                    <span>96%</span>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar" style="width: 96%;"></div>
+                                </div>
+                            </div>
+                            <div style="margin-bottom: 15px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                    <span>LLM Integration Quality</span>
+                                    <span>92%</span>
+                                </div>
+                                <div class="progress-bar-container">
+                                    <div class="progress-bar" style="width: 92%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data for demo purposes
+        const timeSeriesData = [
+            { date: '2025-05-01', value: 145, anomaly: false },
+            { date: '2025-05-02', value: 152, anomaly: false },
+            { date: '2025-05-03', value: 147, anomaly: false },
+            { date: '2025-05-04', value: 143, anomaly: false },
+            { date: '2025-05-05', value: 156, anomaly: false },
+            { date: '2025-05-06', value: 167, anomaly: false },
+            { date: '2025-05-07', value: 172, anomaly: false },
+            { date: '2025-05-08', value: 168, anomaly: false },
+            { date: '2025-05-09', value: 195, anomaly: true },
+            { date: '2025-05-10', value: 175, anomaly: false }
+        ];
+
+        const forecastData = [
+            { date: '2025-05-11', forecast: 178, lower: 170, upper: 186, confidence: 95, change: '+1.7%' },
+            { date: '2025-05-12', forecast: 183, lower: 173, upper: 193, confidence: 95, change: '+2.8%' },
+            { date: '2025-05-13', forecast: 185, lower: 174, upper: 196, confidence: 95, change: '+1.1%' },
+            { date: '2025-05-14', forecast: 188, lower: 176, upper: 200, confidence: 95, change: '+1.6%' },
+            { date: '2025-05-15', forecast: 192, lower: 179, upper: 205, confidence: 95, change: '+2.1%' },
+            { date: '2025-05-16', forecast: 195, lower: 181, upper: 209, confidence: 95, change: '+1.6%' },
+            { date: '2025-05-17', forecast: 201, lower: 185, upper: 217, confidence: 95, change: '+3.1%' }
+        ];
+
+        // Initialize chart
+        let forecastChart;
+        
+        // Wait for DOM to load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Populate dataset details
+            document.getElementById('recordCount').textContent = '1,245 records';
+            
+            const datasetDetails = document.getElementById('datasetDetails');
+            datasetDetails.innerHTML = `
+                <div>
+                    <div style="font-size: 14px; color: var(--gray);">Time Range</div>
+                    <div style="font-weight: 500;">Jan 2025 - May 2025</div>
+                </div>
+                <div>
+                    <div style="font-size: 14px; color: var(--gray);">Frequency</div>
+                    <div style="font-weight: 500;">Daily</div>
+                </div>
+                <div>
+                    <div style="font-size: 14px; color: var(--gray);">Columns</div>
+                    <div style="font-weight: 500;">6 (Date, Values, Metrics)</div>
+                </div>
+                <div>
+                    <div style="font-size: 14px; color: var(--gray);">Missing Values</div>
+                    <div style="font-weight: 500;">2.3%</div>
+                </div>
+            `;
+            
+            // Populate forecast column selection
+            const forecastColumnSelect = document.getElementById('forecastColumn');
+            const columns = ['User Signups', 'Transaction Count', 'Processing Time', 'API Calls', 'Error Rate'];
+            columns.forEach(column => {
+                const option = document.createElement('option');
+                option.value = column.toLowerCase().replace(/\s+/g, '_');
+                option.textContent = column;
+                forecastColumnSelect.appendChild(option);
+            });
+            
+            // Initialize the chart
+            initializeChart();
+            
+            // Populate forecast table
+            populateForecastTable();
+            
+            // Populate logs
+            populateLogs();
+            
+            // Update LLM related content with delay to simulate loading
+            setTimeout(() => {
+                document.getElementById('trendInsight').innerHTML = 'The time series shows a consistent upward trend with a growth rate of approximately 2.3% per week. This trend has strengthened over the past month, indicating increased system adoption.';
+                document.getElementById('anomalyInsight').innerHTML = 'An anomalous spike was detected on May 9th, with values 11.4% above the expected range. This correlates with a promotional event and is not indicative of a system issue.';
+                document.getElementById('etlInsight').innerHTML = 'The ETL process has improved data quality by reducing missing values from 4.8% to 2.3%. This has increased forecast accuracy by approximately 5.7% compared to previous forecasting attempts.';
+                document.getElementById('recommendationInsight').innerHTML = 'Based on the forecast pattern, we recommend preparing for a 15% increase in resource allocation over the next two weeks to accommodate the projected growth trend.';
+                
+                document.getElementById('llmInputPrompt').innerHTML = `You are an expert time series analyst. Analyze the following daily data from our ETL pipeline monitoring system and provide:
+
+1. A 7-day forecast with 95% confidence intervals
+2. Identification of any anomalies or unusual patterns
+3. Key trends and insights about the data behavior
+4. Recommendations based on the forecast results
+
+The data represents our system's daily metrics including user signups, transaction counts, and processing times.
+
+[Dataset summary statistics and first/last 10 rows provided]
+
+Please structure your response with sections for Forecast Analysis, Anomaly Detection, Trend Identification, and Recommendations.`;
+                
+                document.getElementById('llmResponseOutput').innerHTML = `# Forecast Analysis
+
+Based on the time series data provided, I've generated a 7-day forecast with 95% confidence intervals. The forecast shows a continued upward trend with an average growth rate of 2.1% day-over-day.
+
+## Key Metrics:
+- Forecast End: May 17, 2025
+- Expected Value on May 17: 201 (range: 185-217)
+- Overall Growth: +14.9% from current value
+- Model Accuracy (MAPE): 3.17%
+
+## Anomaly Detection
+
+One significant anomaly was detected on May 9, 2025, where the value (195) exceeded the expected range by 11.4%. This correlates with the system-wide update that was deployed on that date. The value returned to normal range the following day, suggesting this was a temporary effect of the deployment rather than a persistent issue.
+
+## Trend Identification
+
+The time series exhibits several notable patterns:
+1. A consistent upward trend averaging 2.3% growth per week
+2. Weekly seasonality with peaks on Wednesdays and troughs on Sundays
+3. Increasing variance in the data over the past month, suggesting more volatile behavior
+4. A strengthening trend over the past 30 days compared to previous periods
+
+## Recommendations
+
+1. **Resource Allocation**: Prepare for a 15% increase in resource requirements over the next two weeks based on the forecast trend
+2. **Monitoring Focus**: Pay special attention to Wednesday peaks, as they are becoming more pronounced
+3. **Alert Thresholds**: Adjust anomaly detection thresholds to account for the increasing volatility
+4. **ETL Schedule**: Consider optimizing the ETL process scheduling to better handle the Wednesday peak loads
+
+The ETL process improvements have significantly enhanced data quality. The reduction in missing values (from 4.8% to 2.3%) has improved forecast accuracy by approximately 5.7%.`;
+            }, 2000);
+            
+            // Setup event listeners
+            document.getElementById('chartType').addEventListener('change', updateChartType);
+            document.getElementById('anomalyThreshold').addEventListener('input', updateAnomalyThreshold);
+            document.getElementById('updateModel').addEventListener('click', updateModelAndRegenerate);
+            document.getElementById('regenerateInsights').addEventListener('click', regenerateInsights);
+        });
+        
+        // Function to initialize chart
+        function initializeChart() {
+            const ctx = document.getElementById('forecastChart').getContext('2d');
+            
+            // Combine historical and forecast data
+            const labels = [...timeSeriesData.map(d => d.date), ...forecastData.map(d => d.date)];
+            const historicalValues = timeSeriesData.map(d => d.value);
+            const forecastValues = forecastData.map(d => d.forecast);
+            
+            // Fill arrays with nulls for proper rendering
+            const historicalDataset = [...historicalValues, ...Array(forecastData.length).fill(null)];
+            const forecastDataset = [...Array(timeSeriesData.length).fill(null), ...forecastValues];
+            const lowerBoundDataset = [...Array(timeSeriesData.length).fill(null), ...forecastData.map(d => d.lower)];
+            const upperBoundDataset = [...Array(timeSeriesData.length).fill(null), ...forecastData.map(d => d.upper)];
+            
+            // Create point backgrounds for anomalies
+            const pointBackgroundColors = timeSeriesData.map(d => d.anomaly ? 'rgba(239, 68, 68, 0.5)' : 'rgba(79, 70, 229, 0.8)');
+            
+            forecastChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Historical Data',
+                            data: historicalDataset,
+                            borderColor: 'rgba(79, 70, 229, 0.8)',
+                            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+                            borderWidth: 2,
+                            pointBackgroundColor: pointBackgroundColors,
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            tension: 0.2
+                        },
+                        {
+                            label: 'Forecast',
+                            data: forecastDataset,
+                            borderColor: 'rgba(16, 185, 129, 0.8)',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointRadius: 4,
+                            pointHoverRadius: 6,
+                            tension: 0.2
+                        },
+                        {
+                            label: 'Lower Bound',
+                            data: lowerBoundDataset,
+                            borderColor: 'rgba(16, 185, 129, 0.3)',
+                            backgroundColor: 'transparent',
+                            borderWidth: 1,
+                            pointRadius: 0,
+                            tension: 0.2,
+                            fill: false
+                        },
+                        {
+                            label: 'Upper Bound',
+                            data: upperBoundDataset,
+                            borderColor: 'rgba(16, 185, 129, 0.3)',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            borderWidth: 1,
+                            pointRadius: 0,
+                            tension: 0.2,
+                            fill: '-1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                maxRotation: 45,
+                                minRotation: 45
+                            }
+                        },
+                        y: {
+                            beginAtZero: false,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            titleColor: '#1e293b',
+                            bodyColor: '#1e293b',
+                            borderColor: '#e2e8f0',
+                            borderWidth: 1,
+                            padding: 12,
+                            boxPadding: 6,
+                            usePointStyle: true,
+                            callbacks: {
+                                title: function(context) {
+                                    return new Date(context[0].label).toLocaleDateString('en-US', { 
+                                        weekday: 'long', 
+                                        year: 'numeric', 
+                                        month: 'short', 
+                                        day: 'numeric' 
+                                    });
+                                }
+                            }
+                        },
+                        legend: {
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Function to populate forecast table
+        function populateForecastTable() {
+            const tableBody = document.querySelector('#forecastTable tbody');
+            tableBody.innerHTML = '';
+            
+            forecastData.forEach(data => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${formatDate(data.date)}</td>
+                    <td><strong>${data.forecast}</strong></td>
+                    <td>${data.lower}</td>
+                    <td>${data.upper}</td>
+                    <td>${data.confidence}%</td>
+                    <td style="color: ${data.change.startsWith('+') ? 'var(--secondary)' : 'var(--danger)'}">
+                        ${data.change}
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // Function to populate logs
+        function populateLogs() {
+            const logEntries = document.getElementById('logEntries');
+            const logs = [
+                { time: '14:32:45', level: 'info', message: 'ETL process started' },
+                { time: '14:32:47', level: 'info', message: 'Loading dataset from source' },
+                { time: '14:32:51', level: 'info', message: 'Dataset loaded successfully: 1,245 records' },
+                { time: '14:32:52', level: 'info', message: 'Started data preprocessing' },
+                { time: '14:32:55', level: 'warning', message: 'Found 29 missing values (2.3%)' },
+                { time: '14:32:57', level: 'info', message: 'Applying imputation for missing values' },
+                { time: '14:32:59', level: 'success', message: 'Missing values handled successfully' },
+                { time: '14:33:01', level: 'info', message: 'Generating LLM prompt for analysis' },
+                { time: '14:33:04', level: 'info', message: 'Sending data to LLM model' },
+                { time: '14:33:10', level: 'success', message: 'Received LLM analysis response' },
+                { time: '14:33:12', level: 'info', message: 'Processing forecast results' },
+                { time: '14:33:15', level: 'info', message: 'Generating visualizations' },
+                { time: '14:33:18', level: 'info', message: 'Extracting insights from LLM response' },
+                { time: '14:33:20', level: 'success', message: 'ETL process completed successfully' }
+            ];
+            
+            logEntries.innerHTML = '';
+            logs.forEach(log => {
+                const entry = document.createElement('div');
+                entry.className = 'log-entry';
+                entry.innerHTML = `
+                    <div class="log-time">${log.time}</div>
+                    <div class="log-level log-level-${log.level}">${log.level.toUpperCase()}</div>
+                    <div class="log-message">${log.message}</div>
+                `;
+                logEntries.appendChild(entry);
+            });
+        }
+        
+        // Function to update chart type
+        function updateChartType() {
+            const chartType = document.getElementById('chartType').value;
+            
+            // Destroy previous chart
+            forecastChart.destroy();
+            
+            // We would update the chart type here
+            // For now, just reinitialize
+            initializeChart();
+        }
+        
+        // Function to update anomaly threshold
+        function updateAnomalyThreshold() {
+            const threshold = document.getElementById('anomalyThreshold').value;
+            document.getElementById('anomalyThresholdValue').textContent = `${threshold} σ`;
+        }
+        
+        // Function to update model and regenerate forecast
+        function updateModelAndRegenerate() {
+            // Show loading state
+            document.getElementById('forecastHorizon').innerHTML = '<span class="loading-spinner"></span>';
+            document.getElementById('confidenceInterval').innerHTML = '<span class="loading-spinner"></span>';
+            document.getElementById('modelAccuracy').innerHTML = '<span class="loading-spinner"></span>';
+            
+            // Get updated parameters
+            const forecastPeriod = document.getElementById('forecastPeriod').value;
+            const confidenceLevel = document.getElementById('confidenceLevel').value;
+            const seasonalityPeriod = document.getElementById('seasonalityPeriod').value;
+            const forecastMethod = document.getElementById('forecastMethod').value;
+            
+            // Simulate API call with timeout
+            setTimeout(() => {
+                // Update UI with new values
+                document.getElementById('forecastHorizon').textContent = `${forecastPeriod} days`;
+                document.getElementById('horizonValue').textContent = `${forecastPeriod} days`;
+                document.getElementById('confidenceInterval').textContent = `${confidenceLevel}%`;
+                
+                // Show success message
+                addLogEntry('success', 'Model updated and forecast regenerated successfully');
+                
+                // Here you would typically call your backend API to regenerate the forecast
+                // For this demo, we'll just show a success state
+            }, 1500);
+        }
+        
+        // Function to regenerate insights
+        function regenerateInsights() {
+            // Show loading state
+            document.getElementById('trendInsight').innerHTML = '<span class="loading-spinner"></span> Generating insights...';
+            document.getElementById('anomalyInsight').innerHTML = '<span class="loading-spinner"></span> Analyzing anomalies...';
+            document.getElementById('etlInsight').innerHTML = '<span class="loading-spinner"></span> Evaluating ETL impact...';
+            document.getElementById('recommendationInsight').innerHTML = '<span class="loading-spinner"></span> Preparing recommendations...';
+            
+            // Simulate API call with timeout
+            setTimeout(() => {
+                // Update insights with new values
+                document.getElementById('trendInsight').innerHTML = 'The updated analysis confirms the upward trend with a revised growth rate of 2.5% per week. The trend appears to be accelerating slightly.';
+                document.getElementById('anomalyInsight').innerHTML = 'No new anomalies detected beyond the previously identified event on May 9th. The anomaly threshold appears appropriately set.';
+                document.getElementById('etlInsight').innerHTML = 'The ETL process continues to maintain high data quality with missing values remaining at 2.3%. Recent optimizations have reduced processing time by 12%.';
+                document.getElementById('recommendationInsight').innerHTML = 'Consider implementing additional monitoring for the accelerating trend. The forecast suggests a 17% increase in resource needs over the next two weeks.';
+                
+                // Show success message
+                addLogEntry('success', 'LLM insights regenerated successfully');
+            }, 2000);
+        }
+        
+        // Function to export forecast data
+        function exportForecastData() {
+            // In a real implementation, this would generate a CSV or Excel file
+            addLogEntry('info', 'Export initiated for forecast data');
+            alert('Forecast data export would be generated here. In a real implementation, this would download a CSV file.');
+        }
+        
+        // Function to clear logs
+        function clearLogs() {
+            document.getElementById('logEntries').innerHTML = '';
+            addLogEntry('info', 'Logs cleared');
+        }
+        
+        // Function to add a log entry
+        function addLogEntry(level, message) {
+            const logEntries = document.getElementById('logEntries');
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('en-US', { hour12: false });
+            
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerHTML = `
+                <div class="log-time">${timeString}</div>
+                <div class="log-level log-level-${level}">${level.toUpperCase()}</div>
+                <div class="log-message">${message}</div>
+            `;
+            
+            logEntries.insertBefore(entry, logEntries.firstChild);
+        }
+        
+        // Function to format date
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { 
+                weekday: 'short', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+        }
+        
+        // Function to switch tabs
+        function switchTab(tabId) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Deactivate all tabs
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Activate selected tab
+            document.getElementById(`${tabId}Tab`).classList.add('active');
+            
+            // Activate selected tab button
+            document.querySelectorAll('.tab').forEach(tab => {
+                if (tab.textContent.toLowerCase().includes(tabId)) {
+                    tab.classList.add('active');
+                }
+            });
+        }
+    </script>
+</body>
+</html>

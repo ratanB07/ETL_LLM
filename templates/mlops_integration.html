@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GENFLOW - ML Ops Integration</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #6366f1;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: var(--dark);
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            background-color: black;
+            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 22px;
+            letter-spacing: 0.5px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 0 20px;
+        }
+
+        .panel {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-light);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .panel-header {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--gray-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-body {
+            padding: 20px;
+        }
+
+        .code-container {
+            background: #1e293b;
+            color: #f8fafc;
+            border-radius: 6px;
+            padding: 16px;
+            font-family: 'Courier New', Courier, monospace;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .code-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .copy-btn {
+            background: rgba(255,255,255,0.1);
+            border: none;
+            color: #94a3b8;
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .code-block {
+            margin: 0;
+            line-height: 1.6;
+            white-space: pre;
+        }
+
+        .keyword {
+            color: #7dd3fc;
+        }
+
+        .function {
+            color: #f472b6;
+        }
+
+        .string {
+            color: #86efac;
+        }
+
+        .comment {
+            color: #64748b;
+            font-style: italic;
+        }
+
+        .loading-animation {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(79, 70, 229, 0.1);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--gray-light);
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            font-weight: 500;
+            color: var(--gray);
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--gray-light);
+        }
+
+        .stat-title {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .stat-description {
+            font-size: 13px;
+            color: var(--gray);
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon">G</div>
+            <div class="logo-text">GENFLOW</div>
+        </div>
+        <div style="font-weight: 500;">ML Ops Integration - LLM-Powered ETL Code Generation</div>
+    </div>
+
+    <div class="container">
+        <div class="tabs">
+            <div class="tab active" onclick="setActiveTab(this, 'etl-pipeline')">ETL Pipeline</div>
+            <div class="tab" onclick="setActiveTab(this, 'data-quality')">Data Quality</div>
+            <div class="tab" onclick="setActiveTab(this, 'monitoring')">Monitoring</div>
+            <div class="tab" onclick="setActiveTab(this, 'deployment')">Deployment</div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="fas fa-robot"></i>
+                    <span id="generation-title">Generating ETL Pipeline Code</span>
+                </div>
+                <div id="generation-status" style="font-size: 14px; color: var(--secondary);">
+                    <i class="fas fa-circle-notch fa-spin"></i> Processing...
+                </div>
+            </div>
+            <div class="panel-body">
+                <div id="loading-animation" class="loading-animation">
+                    <div class="spinner"></div>
+                </div>
+                <div id="code-container" class="code-container" style="display: none;">
+                    <div class="code-header">
+                        <span>ETL_Pipeline.py</span>
+                        <button class="copy-btn" onclick="copyCode()">
+                            <i class="far fa-copy"></i> Copy
+                        </button>
+                    </div>
+                    <pre id="code-block" class="code-block"></pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-title">Code Quality Score</div>
+                <div class="stat-value" id="quality-score">-</div>
+                <div class="stat-description">Based on PEP8 and best practices</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Performance Estimate</div>
+                <div class="stat-value" id="performance-estimate">-</div>
+                <div class="stat-description">Relative processing speed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-title">Complexity</div>
+                <div class="stat-value" id="complexity">-</div>
+                <div class="stat-description">Cyclomatic complexity score</div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="fas fa-lightbulb"></i>
+                    Optimization Suggestions
+                </div>
+            </div>
+            <div class="panel-body" id="suggestions-container">
+                <div class="loading-animation">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get data from sessionStorage
+        const data = JSON.parse(sessionStorage.getItem('mlOpsData') || {};
+        const columns = data.columns || [];
+        const sampleData = data.sampleData || [];
+        const filename = data.filename || 'dataset.csv';
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Start generating code
+            setTimeout(() => {
+                generateETLCode();
+            }, 1000);
+        });
+
+        function setActiveTab(tabElement, tabId) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            tabElement.classList.add('active');
+            
+            // In a real implementation, you would load different content for each tab
+            updateGenerationTitle(tabId);
+        }
+
+        function updateGenerationTitle(tabId) {
+            const titles = {
+                'etl-pipeline': 'Generating ETL Pipeline Code',
+                'data-quality': 'Generating Data Quality Checks',
+                'monitoring': 'Generating Monitoring Setup',
+                'deployment': 'Generating Deployment Scripts'
+            };
+            
+            document.getElementById('generation-title').textContent = titles[tabId] || 'Generating Code';
+            document.getElementById('generation-status').innerHTML = '<i class="fas fa-circle-notch fa-spin"></i> Processing...';
+            
+            // Simulate content generation for the new tab
+            setTimeout(() => {
+                generateTabContent(tabId);
+            }, 1500);
+        }
+
+        function generateETLCode() {
+            // Simulate LLM processing time
+            setTimeout(() => {
+                document.getElementById('loading-animation').style.display = 'none';
+                document.getElementById('code-container').style.display = 'block';
+                
+                // Generate sample ETL code based on the data
+                const code = generateSampleETL(filename, columns);
+                document.getElementById('code-block').innerHTML = highlightSyntax(code);
+                
+                // Update status
+                document.getElementById('generation-status').innerHTML = 
+                    '<i class="fas fa-check-circle" style="color: var(--secondary);"></i> Generation complete';
+                
+                // Generate metrics and suggestions
+                generateMetrics();
+                generateSuggestions();
+            }, 3000);
+        }
+
+        function generateTabContent(tabId) {
+            // This would be replaced with actual LLM-generated content for each tab
+            const content = {
+                'etl-pipeline': generateSampleETL(filename, columns),
+                'data-quality': generateDataQualityChecks(columns),
+                'monitoring': generateMonitoringCode(),
+                'deployment': generateDeploymentScripts()
+            };
+            
+            document.getElementById('code-block').innerHTML = highlightSyntax(content[tabId]);
+            document.getElementById('generation-status').innerHTML = 
+                '<i class="fas fa-check-circle" style="color: var(--secondary);"></i> Generation complete';
+            
+            // Regenerate metrics and suggestions for the new tab
+            generateMetrics();
+            generateSuggestions();
+        }
+
+        function generateSampleETL(filename, columns) {
+            // This is a simplified example - in a real app, this would be LLM-generated
+            const numericCols = columns.filter(col => 
+                col.includes('amount') || col.includes('price') || col.includes('quantity'));
+            const dateCols = columns.filter(col => 
+                col.includes('date') || col.includes('time'));
+            const textCols = columns.filter(col => 
+                !numericCols.includes(col) && !dateCols.includes(col));
+            
+            let code = `# ETL Pipeline generated by GENFLOW ML Ops\n`;
+            code += `# Source: ${filename}\n\n`;
+            code += `import pandas as pd\n`;
+            code += `import numpy as np\n`;
+            code += `from datetime import datetime\n\n`;
+            code += `def load_data(file_path):\n`;
+            code += `    """Load data from source file"""\n`;
+            code += `    try:\n`;
+            code += `        df = pd.read_csv(file_path)\n`;
+            code += `        print(f"Successfully loaded data with {df.shape[0]} rows and {df.shape[1]} columns")\n`;
+            code += `        return df\n`;
+            code += `    except Exception as e:\n`;
+            code += `        print(f"Error loading data: {e}")\n`;
+            code += `        return None\n\n`;
+            
+            if (numericCols.length > 0) {
+                code += `def clean_numeric_data(df):\n`;
+                code += `    """Clean numeric columns"""\n`;
+                code += `    numeric_cols = ${JSON.stringify(numericCols)}\n`;
+                code += `    for col in numeric_cols:\n`;
+                code += `        if col in df.columns:\n`;
+                code += `            # Fill missing values with median\n`;
+                code += `            df[col] = df[col].fillna(df[col].median())\n`;
+                code += `            # Remove outliers using IQR\n`;
+                code += `            q1 = df[col].quantile(0.25)\n`;
+                code += `            q3 = df[col].quantile(0.75)\n`;
+                code += `            iqr = q3 - q1\n`;
+                code += `            df = df[~((df[col] < (q1 - 1.5 * iqr)) | (df[col] > (q3 + 1.5 * iqr)))]\n`;
+                code += `    return df\n\n`;
+            }
+            
+            if (dateCols.length > 0) {
+                code += `def process_dates(df):\n`;
+                code += `    """Process date columns"""\n`;
+                code += `    date_cols = ${JSON.stringify(dateCols)}\n`;
+                code += `    for col in date_cols:\n`;
+                code += `        if col in df.columns:\n`;
+                code += `            df[col] = pd.to_datetime(df[col], errors='coerce')\n`;
+                code += `            # Extract useful date features\n`;
+                code += `            df[f"{col}_year"] = df[col].dt.year\n`;
+                code += `            df[f"{col}_month"] = df[col].dt.month\n`;
+                code += `            df[f"{col}_day"] = df[col].dt.day\n`;
+                code += `    return df\n\n`;
+            }
+            
+            if (textCols.length > 0) {
+                code += `def process_text_data(df):\n`;
+                code += `    """Process text columns"""\n`;
+                code += `    text_cols = ${JSON.stringify(textCols)}\n`;
+                code += `    for col in text_cols:\n`;
+                code += `        if col in df.columns:\n`;
+                code += `            # Convert to string and clean\n`;
+                code += `            df[col] = df[col].astype(str).str.strip()\n`;
+                code += `            # Handle missing values\n`;
+                code += `            df[col] = df[col].replace('nan', '').replace('None', '')\n`;
+                code += `    return df\n\n`;
+            }
+            
+            code += `def transform_data(df):\n`;
+            code += `    """Apply all transformations"""\n`;
+            if (numericCols.length > 0) code += `    df = clean_numeric_data(df)\n`;
+            if (dateCols.length > 0) code += `    df = process_dates(df)\n`;
+            if (textCols.length > 0) code += `    df = process_text_data(df)\n`;
+            code += `    return df\n\n`;
+            
+            code += `def save_to_database(df):\n`;
+            code += `    """Save processed data to database"""\n`;
+            code += `    # This would connect to your actual database\n`;
+            code += `    print("Data saved to database successfully")\n`;
+            code += `    return True\n\n`;
+            
+            code += `def main():\n`;
+            code += `    # Load data\n`;
+            code += `    raw_df = load_data("${filename}")\n`;
+            code += `    if raw_df is None:\n`;
+            code += `        return\n\n`;
+            code += `    # Transform data\n`;
+            code += `    processed_df = transform_data(raw_df)\n\n`;
+            code += `    # Save to database\n`;
+            code += `    save_to_database(processed_df)\n\n`;
+            code += `if __name__ == "__main__":\n`;
+            code += `    main()\n`;
+            
+            return code;
+        }
+
+        function generateDataQualityChecks(columns) {
+            let code = `# Data Quality Checks generated by GENFLOW ML Ops\n\n`;
+            code += `import pandas as pd\n`;
+            code += `import great_expectations as ge\n\n`;
+            code += `def validate_data(df):\n`;
+            code += `    """Run data quality validation"""\n`;
+            code += `    # Convert to Great Expectations dataset\n`;
+            code += `    ge_df = ge.from_pandas(df)\n\n`;
+            
+            columns.forEach(col => {
+                code += `    # Expectations for ${col}\n`;
+                
+                if (col.includes('date') || col.includes('time')) {
+                    code += `    ge_df.expect_column_to_exist("${col}")\n`;
+                    code += `    ge_df.expect_column_values_to_not_be_null("${col}", mostly=0.95)\n`;
+                    code += `    ge_df.expect_column_values_to_match_strftime_format(\n`;
+                    code += `        "${col}", strftime_format="%Y-%m-%d")\n\n`;
+                } else if (col.includes('amount') || col.includes('price') || col.includes('quantity')) {
+                    code += `    ge_df.expect_column_to_exist("${col}")\n`;
+                    code += `    ge_df.expect_column_values_to_not_be_null("${col}", mostly=0.98)\n`;
+                    code += `    ge_df.expect_column_values_to_be_between(\n`;
+                    code += `        "${col}", min_value=0, mostly=0.99)\n\n`;
+                } else {
+                    code += `    ge_df.expect_column_to_exist("${col}")\n`;
+                    code += `    ge_df.expect_column_values_to_not_be_null("${col}", mostly=0.9)\n\n`;
+                }
+            });
+            
+            code += `    # Get validation results\n`;
+            code += `    results = ge_df.validate()\n`;
+            code += `    return results\n\n`;
+            code += `if __name__ == "__main__":\n`;
+            code += `    df = pd.read_csv("your_data.csv")\n`;
+            code += `    validation_results = validate_data(df)\n`;
+            code += `    print(validation_results)\n`;
+            
+            return code;
+        }
+
+        function generateMonitoringCode() {
+            return `# Monitoring Setup generated by GENFLOW ML Ops\n\n` +
+            `import time\n` +
+            `from prometheus_client import start_http_server, Gauge\n\n` +
+            `# Metrics setup\n` +
+            `etl_duration = Gauge('etl_duration_seconds', 'Duration of ETL process in seconds')\n` +
+            `data_quality_score = Gauge('data_quality_score', 'Data quality score (0-100)')\n` +
+            `records_processed = Gauge('records_processed_total', 'Total records processed')\n\n` +
+            `def monitor_etl_process():\n` +
+            `    """Simulate monitoring an ETL process"""\n` +
+            `    start_time = time.time()\n` +
+            `    \n` +
+            `    # Simulate ETL work\n` +
+            `    time.sleep(2)\n` +
+            `    \n` +
+            `    # Update metrics\n` +
+            `    duration = time.time() - start_time\n` +
+            `    etl_duration.set(duration)\n` +
+            `    data_quality_score.set(95.5)  # Simulated quality score\n` +
+            `    records_processed.set(10000)  # Simulated record count\n` +
+            `    \n` +
+            `    print(f"ETL completed in {duration:.2f} seconds")\n\n` +
+            `if __name__ == "__main__":\n` +
+            `    # Start Prometheus metrics server\n` +
+            `    start_http_server(8000)\n` +
+            `    print("Monitoring server started on port 8000")\n` +
+            `    \n` +
+            `    # Run monitoring\n` +
+            `    while True:\n` +
+            `        monitor_etl_process()\n` +
+            `        time.sleep(60)\n`;
+        }
+
+        function generateDeploymentScripts() {
+            return `# Deployment Scripts generated by GENFLOW ML Ops\n\n` +
+            `version: '3.8'\n\n` +
+            `services:\n` +
+            `  etl-pipeline:\n` +
+            `    image: python:3.9-slim\n` +
+            `    working_dir: /app\n` +
+            `    volumes:\n` +
+            `      - ./etl:/app\n` +
+            `    command: python etl_pipeline.py\n` +
+            `    restart: unless-stopped\n\n` +
+            `  monitoring:\n` +
+            `    image: prom/prometheus\n` +
+            `    ports:\n` +
+            `      - "9090:9090"\n` +
+            `    volumes:\n` +
+            `      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml\n` +
+            `    restart: unless-stopped\n\n` +
+            `  grafana:\n` +
+            `    image: grafana/grafana\n` +
+            `    ports:\n` +
+            `      - "3000:3000"\n` +
+            `    volumes:\n` +
+            `      - ./monitoring/grafana:/var/lib/grafana\n` +
+            `    restart: unless-stopped\n\n` +
+            `# To deploy:\n` +
+            `# 1. Save as docker-compose.yml\n` +
+            `# 2. Run: docker-compose up -d\n`;
+        }
+
+        function highlightSyntax(code) {
+            // Simple syntax highlighting for demo purposes
+            return code
+                .replace(/(def|import|from|try|except|if|else|return|for|in|while|as)\b/g, '<span class="keyword">$1</span>')
+                .replace(/(\w+)\(/g, '<span class="function">$1</span>(')
+                .replace(/("[^"]*"|'[^']*')/g, '<span class="string">$1</span>')
+                .replace(/#.*$/gm, '<span class="comment">$&</span>');
+        }
+
+        function generateMetrics() {
+            setTimeout(() => {
+                document.getElementById('quality-score').textContent = '92/100';
+                document.getElementById('performance-estimate').textContent = 'High';
+                document.getElementById('complexity').textContent = 'Medium';
+            }, 500);
+        }
+
+        function generateSuggestions() {
+            setTimeout(() => {
+                const suggestions = [
+                    "Consider adding parallel processing for large datasets using Dask or Ray",
+                    "Implement incremental loading for better performance with streaming data",
+                    "Add data lineage tracking for better observability",
+                    "Consider using Apache Airflow for workflow orchestration",
+                    "Add unit tests for each transformation function"
+                ];
+                
+                let html = '<ul style="list-style-type: none; padding: 0;">';
+                suggestions.forEach(suggestion => {
+                    html += `<li style="padding: 10px; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center;">
+                                <i class="fas fa-lightbulb" style="color: #f59e0b; margin-right: 10px;"></i>
+                                ${suggestion}
+                            </li>`;
+                });
+                html += '</ul>';
+                
+                document.getElementById('suggestions-container').innerHTML = html;
+            }, 800);
+        }
+
+        function copyCode() {
+            const code = document.getElementById('code-block').textContent;
+            navigator.clipboard.writeText(code).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                btn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                setTimeout(() => {
+                    btn.innerHTML = '<i class="far fa-copy"></i> Copy';
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

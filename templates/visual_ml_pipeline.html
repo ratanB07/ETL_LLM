@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GENFLOW - Visual ML Pipeline</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dagre-d3@0.6.4/dist/dagre-d3.min.js"></script>
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #6366f1;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: var(--dark);
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            background-color: black;
+            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 22px;
+            letter-spacing: 0.5px;
+        }
+
+        .pipeline-container {
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .pipeline-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .pipeline-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .pipeline-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .button {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            height: 36px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+        }
+
+        .button-secondary {
+            background: white;
+            color: var(--primary);
+            border: 1px solid var(--gray-light);
+            box-shadow: none;
+        }
+
+        .button-secondary:hover {
+            background-color: #f1f5f9;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .pipeline-content {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 20px;
+            height: calc(100vh - 120px);
+        }
+
+        .pipeline-sidebar {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .sidebar-section {
+            margin-bottom: 20px;
+        }
+
+        .sidebar-title {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--gray);
+            margin-bottom: 12px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-size: 14px;
+            color: var(--dark);
+            border-radius: 6px;
+            margin-bottom: 4px;
+        }
+
+        .sidebar-item:hover {
+            background-color: var(--gray-light);
+        }
+
+        .sidebar-item.active {
+            background-color: #e0e7ff;
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        .sidebar-item i {
+            margin-right: 10px;
+            font-size: 16px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .pipeline-main {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .pipeline-canvas {
+            width: 100%;
+            height: 100%;
+            background-color: #f8fafc;
+            background-image: linear-gradient(to right, #f1f5f9 1px, transparent 1px),
+                              linear-gradient(to bottom, #f1f5f9 1px, transparent 1px);
+            background-size: 20px 20px;
+            position: relative;
+            overflow: auto;
+        }
+
+        #pipeline-graph {
+            width: 100%;
+            height: 100%;
+            min-height: 600px;
+        }
+
+        .node {
+            fill: white;
+            stroke: var(--primary);
+            stroke-width: 2px;
+            rx: 8px;
+            ry: 8px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+
+        .node-text {
+            font-size: 12px;
+            font-weight: 500;
+            fill: var(--dark);
+            pointer-events: none;
+        }
+
+        .node-icon {
+            font-size: 16px;
+            fill: var(--primary);
+        }
+
+        .edgePath path {
+            stroke: var(--gray);
+            stroke-width: 2px;
+            fill: none;
+        }
+
+        .edgeLabel text {
+            font-size: 10px;
+            fill: var(--gray);
+        }
+
+        .node.extract {
+            fill: #e0f2fe;
+            stroke: #38bdf8;
+        }
+
+        .node.transform {
+            fill: #ecfdf5;
+            stroke: #10b981;
+        }
+
+        .node.load {
+            fill: #fef2f2;
+            stroke: #ef4444;
+        }
+
+        .node.model {
+            fill: #f5f3ff;
+            stroke: #8b5cf6;
+        }
+
+        .node.evaluation {
+            fill: #fffbeb;
+            stroke: #f59e0b;
+        }
+
+        .pipeline-stats {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 15px;
+            width: 300px;
+            z-index: 10;
+        }
+
+        .stats-header {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--gray-light);
+            font-size: 13px;
+        }
+
+        .stat-label {
+            color: var(--gray);
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: var(--dark);
+        }
+
+        .node-details {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 15px;
+            width: 300px;
+            z-index: 10;
+            display: none;
+        }
+
+        .details-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .details-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .close-details {
+            background: none;
+            border: none;
+            color: var(--gray);
+            cursor: pointer;
+            font-size: 18px;
+        }
+
+        .details-content {
+            font-size: 13px;
+            color: var(--dark);
+            line-height: 1.5;
+        }
+
+        .details-section {
+            margin-bottom: 10px;
+        }
+
+        .section-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--dark);
+        }
+
+        .section-content {
+            color: var(--gray);
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255,255,255,0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #e0e7ff;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        .loading-text {
+            font-size: 18px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .llm-suggestion {
+            background-color: #f8fafc;
+            border-left: 4px solid var(--primary);
+            padding: 12px;
+            margin-top: 15px;
+            border-radius: 0 6px 6px 0;
+        }
+
+        .suggestion-title {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .suggestion-content {
+            font-size: 13px;
+            color: var(--dark);
+            line-height: 1.5;
+        }
+
+        .apply-suggestion {
+            margin-top: 10px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .apply-suggestion:hover {
+            background-color: var(--primary-dark);
+        }
+
+        .timeline-container {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 15px;
+            width: calc(100% - 340px);
+            z-index: 10;
+            height: 100px;
+            overflow-x: auto;
+        }
+
+        .timeline {
+            display: flex;
+            height: 100%;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .timeline-step {
+            flex: 0 0 120px;
+            height: 60px;
+            background-color: white;
+            border-radius: 8px;
+            border: 1px solid var(--gray-light);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+        }
+
+        .timeline-step.active {
+            border-color: var(--primary);
+            background-color: #e0e7ff;
+        }
+
+        .timeline-step.completed {
+            border-color: var(--secondary);
+            background-color: #ecfdf5;
+        }
+
+        .timeline-step-icon {
+            font-size: 16px;
+            margin-bottom: 5px;
+            color: var(--gray);
+        }
+
+        .timeline-step.active .timeline-step-icon {
+            color: var(--primary);
+        }
+
+        .timeline-step.completed .timeline-step-icon {
+            color: var(--secondary);
+        }
+
+        .timeline-step-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--gray);
+        }
+
+        .timeline-step.active .timeline-step-label {
+            color: var(--primary);
+        }
+
+        .timeline-step.completed .timeline-step-label {
+            color: var(--secondary);
+        }
+
+        .timeline-connector {
+            flex: 0 0 20px;
+            height: 2px;
+            background-color: var(--gray-light);
+            position: relative;
+        }
+
+        .timeline-connector.completed {
+            background-color: var(--secondary);
+        }
+
+        .timeline-connector::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--gray-light);
+        }
+
+        .timeline-connector.completed::after {
+            background-color: var(--secondary);
+        }
+
+        .pipeline-progress {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 15px;
+            width: 300px;
+            z-index: 10;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .progress-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background-color: var(--gray-light);
+            border-radius: 4px;
+            margin-bottom: 10px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--primary-light));
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.5s ease;
+        }
+
+        .progress-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--gray);
+        }
+
+        .progress-percentage {
+            font-weight: 600;
+            color: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon">G</div>
+            <div class="logo-text">GENFLOW</div>
+        </div>
+        <div class="header-title">Visual ML Pipeline</div>
+    </div>
+
+    <div class="pipeline-container">
+        <div class="pipeline-header">
+            <div class="pipeline-title">
+                <i class="fas fa-project-diagram"></i>
+                <span id="pipeline-title">End-to-End ML Pipeline</span>
+            </div>
+            <div class="pipeline-actions">
+                <button class="button button-secondary" id="export-pipeline">
+                    <i class="fas fa-file-export"></i>
+                    Export
+                </button>
+                <button class="button" id="run-pipeline">
+                    <i class="fas fa-play"></i>
+                    Execute Pipeline
+                </button>
+            </div>
+        </div>
+
+        <div class="pipeline-content">
+            <div class="pipeline-sidebar">
+                <div class="sidebar-section">
+                    <div class="sidebar-title">
+                        <i class="fas fa-layer-group"></i>
+                        Pipeline Components
+                    </div>
+                    <div class="sidebar-item active" data-type="all">
+                        <i class="fas fa-th"></i>
+                        All Components
+                    </div>
+                    <div class="sidebar-item" data-type="extract">
+                        <i class="fas fa-database"></i>
+                        Data Sources
+                    </div>
+                    <div class="sidebar-item" data-type="transform">
+                        <i class="fas fa-cogs"></i>
+                        Transformations
+                    </div>
+                    <div class="sidebar-item" data-type="model">
+                        <i class="fas fa-brain"></i>
+                        ML Models
+                    </div>
+                    <div class="sidebar-item" data-type="evaluation">
+                        <i class="fas fa-chart-bar"></i>
+                        Evaluation
+                    </div>
+                    <div class="sidebar-item" data-type="output">
+                        <i class="fas fa-upload"></i>
+                        Outputs
+                    </div>
+                </div>
+
+                <div class="sidebar-section">
+                    <div class="sidebar-title">
+                        <i class="fas fa-magic"></i>
+                        LLM Suggestions
+                    </div>
+                    <div id="llm-suggestions">
+                        <!-- LLM suggestions will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="pipeline-main">
+                <div class="pipeline-progress">
+                    <div class="progress-header">
+                        <div class="progress-title">
+                            <i class="fas fa-tasks"></i>
+                            Pipeline Progress
+                        </div>
+                        <div class="progress-percentage">0%</div>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                    <div class="progress-stats">
+                        <span>Started</span>
+                        <span id="progress-stats">0/6 steps</span>
+                    </div>
+                </div>
+
+                <div class="pipeline-canvas">
+                    <svg id="pipeline-graph"></svg>
+                </div>
+
+                <div class="node-details" id="node-details">
+                    <div class="details-header">
+                        <div class="details-title">
+                            <i class="fas fa-info-circle"></i>
+                            <span id="node-title">Node Details</span>
+                        </div>
+                        <button class="close-details" id="close-details">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="details-content" id="details-content">
+                        <!-- Node details will be populated here -->
+                    </div>
+                </div>
+
+                <div class="timeline-container">
+                    <div class="timeline" id="pipeline-timeline">
+                        <!-- Timeline steps will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text" id="loading-text">Building your ML pipeline...</div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get data from sessionStorage
+            const pipelineData = JSON.parse(sessionStorage.getItem('visualPipelineData'));
+            
+            if (!pipelineData || !pipelineData.data || !pipelineData.columns) {
+                document.getElementById('loading-text').textContent = 'Error: No data available';
+                setTimeout(() => {
+                    window.close();
+                }, 2000);
+                return;
+            }
+            
+            // Set pipeline title
+            document.getElementById('pipeline-title').textContent = 
+                `ML Pipeline for ${pipelineData.filename || 'your dataset'}`;
+            
+            // Initialize the pipeline visualization
+            initPipelineVisualization(pipelineData);
+            
+            // Hide loading overlay after 2 seconds (simulate processing)
+            setTimeout(() => {
+                document.getElementById('loading-overlay').style.display = 'none';
+            }, 2000);
+        });
+
+        function initPipelineVisualization(data) {
+            // Create the D3 graph
+            const svg = d3.select("#pipeline-graph");
+            const svgGroup = svg.append("g");
+            
+            // Create a directed graph
+            const g = new dagreD3.graphlib.Graph()
+                .setGraph({})
+                .setDefaultEdgeLabel(() => ({}));
+            
+            // Define pipeline nodes based on the data
+            const columnTypes = analyzeColumnTypes(data.data, data.columns);
+            
+            // Add nodes to the graph
+            g.setNode("extract", {
+                label: "Data Extraction",
+                description: `Source: ${data.filename || 'Unknown'}\nColumns: ${data.columns.length}\nRows: ${data.data.length}`,
+                type: "extract",
+                icon: "fas fa-database",
+                status: "completed"
+            });
+            
+            g.setNode("clean", {
+                label: "Data Cleaning",
+                description: "Automated data cleaning based on column analysis",
+                type: "transform",
+                icon: "fas fa-broom",
+                status: "completed"
+            });
+            
+            g.setNode("transform", {
+                label: "Feature Engineering",
+                description: `Generated features based on column types:\n- ${columnTypes.numeric} numeric\n- ${columnTypes.categorical} categorical\n- ${columnTypes.text} text`,
+                type: "transform",
+                icon: "fas fa-cogs",
+                status: "active"
+            });
+            
+            g.setNode("model", {
+                label: "Model Training",
+                description: "Automated model selection and training using AutoML",
+                type: "model",
+                icon: "fas fa-brain",
+                status: "pending"
+            });
+            
+            g.setNode("evaluate", {
+                label: "Model Evaluation",
+                description: "Performance metrics and validation",
+                type: "evaluation",
+                icon: "fas fa-chart-line",
+                status: "pending"
+            });
+            
+            g.setNode("output", {
+                label: "Output Results",
+                description: "Export predictions and model artifacts",
+                type: "output",
+                icon: "fas fa-file-export",
+                status: "pending"
+            });
+            
+            // Add edges between nodes
+            g.setEdge("extract", "clean", { label: "" });
+            g.setEdge("clean", "transform", { label: "" });
+            g.setEdge("transform", "model", { label: "" });
+            g.setEdge("model", "evaluate", { label: "" });
+            g.setEdge("evaluate", "output", { label: "" });
+            
+            // Set node styles
+            g.nodes().forEach(function(v) {
+                const node = g.node(v);
+                node.rx = node.ry = 8;
+                node.padding = 10;
+                
+                // Set node class based on type
+                node.class = "node " + node.type;
+                
+                // Create label with icon
+                node.label = `
+                    <div style="text-align: center; padding: 5px;">
+                        <i class="${node.icon}" style="font-size: 16px; margin-bottom: 5px; display: block;"></i>
+                        ${node.label}
+                    </div>
+                `;
+            });
+            
+            // Create the renderer
+            const render = new dagreD3.render();
+            
+            // Run the renderer. This is what draws the final graph.
+            render(svgGroup, g);
+            
+            // Center the graph
+            const xCenterOffset = (svg.node().clientWidth - g.graph().width) / 2;
+            svgGroup.attr("transform", `translate(${xCenterOffset}, 20)`);
+            svg.attr("height", g.graph().height + 40);
+            
+            // Add zoom behavior
+            const zoom = d3.zoom().on("zoom", function(event) {
+                svgGroup.attr("transform", event.transform);
+            });
+            svg.call(zoom);
+            
+            // Add node click interaction
+            svgGroup.selectAll("g.node")
+                .on("click", function(event, v) {
+                    const node = g.node(v);
+                    showNodeDetails(node);
+                });
+            
+            // Initialize timeline
+            initTimeline(g);
+            
+            // Generate LLM suggestions
+            generateLLMSuggestions(data, columnTypes);
+        }
+        
+        function analyzeColumnTypes(data, columns) {
+            const result = {
+                numeric: 0,
+                categorical: 0,
+                text: 0,
+                datetime: 0,
+                boolean: 0
+            };
+            
+            if (!data || !data.length || !columns || !columns.length) return result;
+            
+            columns.forEach(col => {
+                const sampleValue = data[0][col];
+                const type = determineColumnType(sampleValue);
+                result[type]++;
+            });
+            
+            return result;
+        }
+        
+        function determineColumnType(value) {
+            if (value === null || value === undefined) return 'text';
+            
+            // Check for numeric values
+            if (!isNaN(Number(value)) && value !== '' && value !== null) {
+                return 'numeric';
+            }
+            
+            // Check for date strings
+            if (typeof value === 'string' && !isNaN(Date.parse(value))) {
+                return 'datetime';
+            }
+            
+            // Check for boolean values
+            if (value === true || value === false || 
+                String(value).toLowerCase() === 'true' || 
+                String(value).toLowerCase() === 'false') {
+                return 'boolean';
+            }
+            
+            // Check for text with many unique values (likely free text)
+            if (typeof value === 'string' && value.length > 30) {
+                return 'text';
+            }
+            
+            // Default to categorical
+            return 'categorical';
+        }
+        
+        function showNodeDetails(node) {
+            document.getElementById('node-title').textContent = node.label;
+            
+            let detailsContent = `
+                <div class="details-section">
+                    <div class="section-title">Description</div>
+                    <div class="section-content">${node.description.replace(/\n/g, '<br>')}</div>
+                </div>
+            `;
+            
+            // Add specific details based on node type
+            if (node.type === 'extract') {
+                detailsContent += `
+                    <div class="details-section">
+                        <div class="section-title">Data Sample</div>
+                        <div class="section-content">First 5 rows displayed in console</div>
+                    </div>
+                `;
+            } else if (node.type === 'transform') {
+                detailsContent += `
+                    <div class="details-section">
+                        <div class="section-title">Transformations</div>
+                        <div class="section-content">Automatically generated based on data profiling</div>
+                    </div>
+                `;
+            } else if (node.type === 'model') {
+                detailsContent += `
+                    <div class="details-section">
+                        <div class="section-title">Model Candidates</div>
+                        <div class="section-content">
+                            <ul style="margin-left: 15px;">
+                                <li>Random Forest</li>
+                                <li>XGBoost</li>
+                                <li>Logistic Regression</li>
+                                <li>Neural Network</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('details-content').innerHTML = detailsContent;
+            document.getElementById('node-details').style.display = 'block';
+        }
+        
+        function initTimeline(graph) {
+            const timeline = document.getElementById('pipeline-timeline');
+            const nodes = graph.nodes();
+            
+            nodes.forEach((nodeId, index) => {
+                const node = graph.node(nodeId);
+                
+                // Create step element
+                const step = document.createElement('div');
+                step.className = `timeline-step ${node.status}`;
+                step.innerHTML = `
+                    <div class="timeline-step-icon">
+                        <i class="${node.icon}"></i>
+                    </div>
+                    <div class="timeline-step-label">${node.label}</div>
+                `;
+                
+                // Add click handler
+                step.addEventListener('click', () => {
+                    showNodeDetails(node);
+                });
+                
+                timeline.appendChild(step);
+                
+                // Add connector if not last step
+                if (index < nodes.length - 1) {
+                    const connector = document.createElement('div');
+                    connector.className = 'timeline-connector';
+                    timeline.appendChild(connector);
+                }
+            });
+        }
+        
+        function generateLLMSuggestions(data, columnTypes) {
+            const suggestionsContainer = document.getElementById('llm-suggestions');
+            
+            // Clear existing suggestions
+            suggestionsContainer.innerHTML = '';
+            
+            // Generate suggestions based on data characteristics
+            const suggestions = [];
+            
+            // Suggestion 1: Feature engineering
+            if (columnTypes.numeric > 3) {
+                suggestions.push({
+                    title: "Advanced Feature Engineering",
+                    content: "Your dataset contains multiple numeric columns. Consider creating interaction terms and polynomial features to capture non-linear relationships.",
+                    action: "applyFeatureEngineering"
+                });
+            }
+            
+            // Suggestion 2: Text processing
+            if (columnTypes.text > 0) {
+                suggestions.push({
+                    title: "Text Processing",
+                    content: "Your dataset contains text columns. Consider applying NLP techniques like TF-IDF or word embeddings to extract meaningful features.",
+                    action: "applyTextProcessing"
+                });
+            }
+            
+            // Suggestion 3: Model selection
+            suggestions.push({
+                title: "Model Selection Strategy",
+                content: "Based on your data characteristics, I recommend starting with a Random Forest model as it handles both numeric and categorical features well.",
+                action: "setModelStrategy"
+            });
+            
+            // Suggestion 4: Evaluation metrics
+            suggestions.push({
+                title: "Evaluation Metrics",
+                content: "For a balanced assessment of model performance, consider using multiple metrics including accuracy, precision, recall, and F1-score.",
+                action: "setEvaluationMetrics"
+            });
+            
+            // Add suggestions to the UI
+            suggestions.forEach((suggestion, index) => {
+                const suggestionElement = document.createElement('div');
+                suggestionElement.className = 'llm-suggestion';
+                suggestionElement.innerHTML = `
+                    <div class="suggestion-title">
+                        <i class="fas fa-lightbulb"></i>
+                        ${suggestion.title}
+                    </div>
+                    <div class="suggestion-content">${suggestion.content}</div>
+                    <button class="apply-suggestion" data-action="${suggestion.action}">
+                        <i class="fas fa-magic"></i>
+                        Apply Suggestion
+                    </button>
+                `;
+                
+                suggestionsContainer.appendChild(suggestionElement);
+            });
+            
+            // Add event listeners to suggestion buttons
+            document.querySelectorAll('.apply-suggestion').forEach(button => {
+                button.addEventListener('click', function() {
+                    const action = this.getAttribute('data-action');
+                    applyLLMSuggestion(action);
+                });
+            });
+        }
+        
+        function applyLLMSuggestion(action) {
+            // In a real implementation, this would modify the pipeline
+            showNotification('Suggestion Applied', `LLM suggestion "${action}" has been applied to your pipeline.`, 'success');
+            
+            // Update the UI to reflect changes
+            if (action === 'applyFeatureEngineering') {
+                // Would update the transformation node
+            } else if (action === 'setModelStrategy') {
+                // Would update the model node
+            }
+        }
+        
+        function showNotification(title, message, type) {
+            // In a real implementation, this would show a toast notification
+            console.log(`[${type.toUpperCase()}] ${title}: ${message}`);
+        }
+        
+        // Close details panel
+        document.getElementById('close-details').addEventListener('click', function() {
+            document.getElementById('node-details').style.display = 'none';
+        });
+        
+        // Export pipeline
+        document.getElementById('export-pipeline').addEventListener('click', function() {
+            // In a real implementation, this would export the pipeline definition
+            showNotification('Export', 'Pipeline exported successfully', 'success');
+        });
+        
+        // Run pipeline
+        document.getElementById('run-pipeline').addEventListener('click', function() {
+            // Show loading overlay
+            document.getElementById('loading-overlay').style.display = 'flex';
+            document.getElementById('loading-text').textContent = 'Executing pipeline...';
+            
+            // Simulate pipeline execution
+            simulatePipelineExecution();
+        });
+        
+        function simulatePipelineExecution() {
+            const steps = document.querySelectorAll('.timeline-step');
+            const connectors = document.querySelectorAll('.timeline-connector');
+            const progressFill = document.getElementById('progress-fill');
+            const progressStats = document.getElementById('progress-stats');
+            const progressPercentage = document.querySelector('.progress-percentage');
+            
+            let currentStep = 0;
+            const totalSteps = steps.length;
+            
+            const executeStep = () => {
+                if (currentStep >= totalSteps) {
+                    // Pipeline completed
+                    document.getElementById('loading-text').textContent = 'Pipeline execution completed!';
+                    setTimeout(() => {
+                        document.getElementById('loading-overlay').style.display = 'none';
+                    }, 2000);
+                    return;
+                }
+                
+                // Update current step
+                if (currentStep > 0) {
+                    steps[currentStep - 1].classList.remove('active');
+                    steps[currentStep - 1].classList.add('completed');
+                    
+                    if (connectors[currentStep - 1]) {
+                        connectors[currentStep - 1].classList.add('completed');
+                    }
+                }
+                
+                steps[currentStep].classList.add('active');
+                
+                // Update progress
+                const progress = ((currentStep + 1) / totalSteps) * 100;
+                progressFill.style.width = `${progress}%`;
+                progressPercentage.textContent = `${Math.round(progress)}%`;
+                progressStats.textContent = `${currentStep + 1}/${totalSteps} steps`;
+                
+                // Simulate processing time
+                const processingTime = 1000 + Math.random() * 2000;
+                document.getElementById('loading-text').textContent = 
+                    `Processing: ${steps[currentStep].querySelector('.timeline-step-label').textContent}...`;
+                
+                currentStep++;
+                
+                setTimeout(executeStep, processingTime);
+            };
+            
+            executeStep();
+        }
+    </script>
+</body>
+</html>

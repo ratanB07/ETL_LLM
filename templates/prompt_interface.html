@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prompt Engineering Interface - GENFLOW</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #6366f1;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: var(--dark);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            background-color: black;
+            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 22px;
+            letter-spacing: 0.5px;
+        }
+
+        .main-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .panel {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-light);
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .panel-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--gray-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f8fafc;
+        }
+
+        .panel-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-body {
+            padding: 16px;
+        }
+
+        .button {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            height: 36px;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(79, 70, 229, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+        }
+
+        .button-secondary {
+            background: white;
+            color: var(--primary);
+            border: 1px solid var(--gray-light);
+            box-shadow: none;
+        }
+
+        .button-secondary:hover {
+            background-color: #f1f5f9;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .prompt-form {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        #promptInput {
+            flex: 1;
+            padding: 10px 15px;
+            border: 1px solid var(--gray-light);
+            border-radius: 6px;
+            font-size: 14px;
+            min-height: 36px;
+            resize: none;
+        }
+
+        #promptInput:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+        }
+
+        .response-container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .response-section {
+            flex: 1;
+        }
+
+        .response-box {
+            background-color: white;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid var(--gray-light);
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+        }
+
+        .log-box {
+            background-color: #1e293b;
+            color: #f8fafc;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .log-time {
+            color: var(--gray-light);
+            font-size: 11px;
+            margin-right: 10px;
+        }
+
+        .log-message {
+            color: #f8fafc;
+        }
+
+        .log-level-info {
+            color: #3b82f6;
+        }
+
+        .log-level-success {
+            color: #10b981;
+        }
+
+        .log-level-warning {
+            color: #f59e0b;
+        }
+
+        .log-level-error {
+            color: #ef4444;
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            background-color: #f8fafc;
+            border: 1px solid var(--gray-light);
+        }
+
+        .message-user {
+            background-color: #e0e7ff;
+            border-color: #c7d2fe;
+        }
+
+        .message-ai {
+            background-color: #f0fdf4;
+            border-color: #bbf7d0;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .message-content {
+            line-height: 1.5;
+        }
+
+        .suggested-prompts {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .suggested-prompt {
+            padding: 12px;
+            background-color: white;
+            border: 1px solid var(--gray-light);
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .suggested-prompt:hover {
+            background-color: #f8fafc;
+            border-color: var(--primary-light);
+            transform: translateY(-2px);
+        }
+
+        .suggested-prompt-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--primary);
+        }
+
+        .suggested-prompt-text {
+            font-size: 13px;
+            color: var(--gray);
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(79, 70, 229, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+
+        .status-success {
+            background-color: var(--secondary);
+            box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.3);
+        }
+
+        .status-processing {
+            background-color: var(--warning);
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.3);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .response-container {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <div class="logo-icon">G</div>
+            <div class="logo-text">GENFLOW</div>
+        </div>
+        <div class="status-indicator">
+            <div class="status-dot status-success"></div>
+            <span>LLM Connected</span>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1 class="main-title">
+            <i class="fas fa-comment-dots"></i>
+            Prompt Engineering Interface
+        </h1>
+
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="fas fa-comment-alt"></i>
+                    Prompt Interface
+                </div>
+            </div>
+            <div class="panel-body">
+                <div class="prompt-form">
+                    <textarea id="promptInput" placeholder="Enter your ETL-related prompt (e.g., 'Clean the customer data by removing duplicates and standardizing addresses')" rows="2"></textarea>
+                    <button id="submitPrompt" class="button">
+                        <i class="fas fa-paper-plane"></i>
+                        Submit
+                    </button>
+                </div>
+
+                <div class="suggested-prompts">
+                    <div class="suggested-prompt" onclick="useSuggestedPrompt('Clean the dataset by removing duplicate rows')">
+                        <div class="suggested-prompt-title">Remove Duplicates</div>
+                        <div class="suggested-prompt-text">Identify and remove duplicate rows from the dataset</div>
+                    </div>
+                    <div class="suggested-prompt" onclick="useSuggestedPrompt('Standardize date formats in all date columns to YYYY-MM-DD')">
+                        <div class="suggested-prompt-title">Standardize Dates</div>
+                        <div class="suggested-prompt-text">Convert all date formats to a consistent standard</div>
+                    </div>
+                    <div class="suggested-prompt" onclick="useSuggestedPrompt('Identify and handle missing values in numeric columns')">
+                        <div class="suggested-prompt-title">Handle Missing Values</div>
+                        <div class="suggested-prompt-text">Analyze and impute missing numeric data</div>
+                    </div>
+                    <div class="suggested-prompt" onclick="useSuggestedPrompt('Create a new column that combines first and last name columns')">
+                        <div class="suggested-prompt-title">Combine Columns</div>
+                        <div class="suggested-prompt-text">Merge two columns into a new derived column</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="response-container">
+            <div class="response-section">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fas fa-exchange-alt"></i>
+                            Prompt & Response
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div id="conversationHistory" class="response-box">
+                            <!-- Messages will appear here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="response-section">
+                <div class="panel">
+                    <div class="panel-header">
+                        <div class="panel-title">
+                            <i class="fas fa-terminal"></i>
+                            Processing Log
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <div id="processingLog" class="log-box">
+                            <div class="log-entry">
+                                <span class="log-time">[SYSTEM]</span>
+                                <span class="log-message log-level-info">Prompt engineering interface initialized</span>
+                            </div>
+                            <div class="log-entry">
+                                <span class="log-time">[SYSTEM]</span>
+                                <span class="log-message log-level-info">Connected to LLM backend</span>
+                            </div>
+                            <div class="log-entry">
+                                <span class="log-time">[SYSTEM]</span>
+                                <span class="log-message log-level-success">Ready for ETL prompt engineering</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <i class="fas fa-cog"></i>
+                    Generated ETL Code
+                </div>
+                <button id="copyCode" class="button button-secondary button-sm">
+                    <i class="fas fa-copy"></i>
+                    Copy Code
+                </button>
+            </div>
+            <div class="panel-body">
+                <pre id="generatedCode" style="background-color: #1e293b; color: #f8fafc; padding: 15px; border-radius: 6px; overflow-x: auto; font-family: 'Courier New', monospace; min-height: 100px;">
+# Generated ETL code will appear here
+                </pre>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load the dataset from session storage
+        const dataset = JSON.parse(sessionStorage.getItem('promptEngineeringData'));
+        if (!dataset) {
+            alert('No dataset found. Please start from the main interface.');
+            window.close();
+        }
+
+        // DOM elements
+        const promptInput = document.getElementById('promptInput');
+        const submitButton = document.getElementById('submitPrompt');
+        const conversationHistory = document.getElementById('conversationHistory');
+        const processingLog = document.getElementById('processingLog');
+        const generatedCode = document.getElementById('generatedCode');
+        const copyCodeButton = document.getElementById('copyCode');
+
+        // Add log entry
+        function addLogEntry(message, level = 'info') {
+            const now = new Date();
+            const timeString = `[${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}]`;
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `
+                <span class="log-time">${timeString}</span>
+                <span class="log-message log-level-${level}">${message}</span>
+            `;
+            
+            processingLog.appendChild(logEntry);
+            processingLog.scrollTop = processingLog.scrollHeight;
+        }
+
+        // Add message to conversation
+        function addMessage(role, content) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message message-${role}`;
+            
+            const header = document.createElement('div');
+            header.className = 'message-header';
+            header.innerHTML = `<span>${role === 'user' ? 'You' : 'ETL Assistant'}</span><span>${new Date().toLocaleTimeString()}</span>`;
+            
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'message-content';
+            contentDiv.textContent = content;
+            
+            messageDiv.appendChild(header);
+            messageDiv.appendChild(contentDiv);
+            
+            conversationHistory.appendChild(messageDiv);
+            conversationHistory.scrollTop = conversationHistory.scrollHeight;
+        }
+
+        // Use suggested prompt
+        function useSuggestedPrompt(prompt) {
+            promptInput.value = prompt;
+            promptInput.focus();
+        }
+
+        // Process prompt (simulated LLM interaction)
+        function processPrompt(prompt) {
+            addLogEntry('Processing ETL prompt...', 'info');
+            
+            // Simulate processing delay
+            submitButton.disabled = true;
+            submitButton.innerHTML = '<div class="spinner"></div> Processing';
+            
+            // In a real implementation, this would call an actual LLM API
+            setTimeout(() => {
+                // Simulate LLM response
+                const response = generateETLResponse(prompt, dataset.columns);
+                
+                // Add messages to conversation
+                addMessage('user', prompt);
+                addMessage('ai', response.explanation);
+                
+                // Update generated code
+                generatedCode.textContent = response.code;
+                
+                // Add log entries
+                addLogEntry('Prompt processed successfully', 'success');
+                addLogEntry('Generated ETL transformation code', 'info');
+                
+                // Reset button
+                submitButton.disabled = false;
+                submitButton.innerHTML = '<i class="fas fa-paper-plane"></i> Submit';
+            }, 1500);
+        }
+
+        // Generate simulated ETL response
+        function generateETLResponse(prompt, columns) {
+            // This is a simulation - in a real app, this would call an LLM API
+            const commonResponses = {
+                'clean': `I'll help clean the dataset. Based on your request, I'll perform data cleaning operations including removing duplicates, standardizing formats, and handling missing values.`,
+                'filter': `I'll create filters for the dataset. The filter conditions will be applied to the relevant columns to subset your data as requested.`,
+                'transform': `I'll generate transformations for your data. This includes creating derived columns, applying calculations, and modifying existing values.`,
+                'aggregate': `I'll set up aggregations for your data. This will include grouping by specified columns and calculating summary statistics.`,
+                'join': `I'll prepare your data for joining with another dataset. The join operation will be performed on the key columns you specify.`
+            };
+            
+            let action = 'transform';
+            if (prompt.toLowerCase().includes('clean')) action = 'clean';
+            if (prompt.toLowerCase().includes('filter')) action = 'filter';
+            if (prompt.toLowerCase().includes('aggregate')) action = 'aggregate';
+            if (prompt.toLowerCase().includes('join')) action = 'join';
+            
+            // Generate sample Python code
+            let code = '';
+            switch(action) {
+                case 'clean':
+                    code = `# Data cleaning operations
+import pandas as pd
+
+# Load your dataset
+df = pd.read_csv('your_data.csv')
+
+# Remove duplicates
+df = df.drop_duplicates()
+
+# Standardize text columns
+df['name'] = df['name'].str.title()
+df['email'] = df['email'].str.lower()
+
+# Handle missing values
+df = df.fillna({'age': df['age'].median()})
+
+# Save cleaned data
+df.to_csv('cleaned_data.csv', index=False)`;
+                    break;
+                    
+                case 'filter':
+                    code = `# Data filtering operations
+import pandas as pd
+
+# Load your dataset
+df = pd.read_csv('your_data.csv')
+
+# Apply filters
+filtered_df = df[
+    (df['age'] > 18) & 
+    (df['status'] == 'active')
+]
+
+# Save filtered data
+filtered_df.to_csv('filtered_data.csv', index=False)`;
+                    break;
+                    
+                case 'aggregate':
+                    code = `# Data aggregation operations
+import pandas as pd
+
+# Load your dataset
+df = pd.read_csv('your_data.csv')
+
+# Group and aggregate
+agg_df = df.groupby('department').agg({
+    'salary': ['mean', 'min', 'max', 'count'],
+    'age': 'mean'
+})
+
+# Save aggregated data
+agg_df.to_csv('aggregated_data.csv')`;
+                    break;
+                    
+                case 'join':
+                    code = `# Data join operations
+import pandas as pd
+
+# Load datasets
+df1 = pd.read_csv('data1.csv')
+df2 = pd.read_csv('data2.csv')
+
+# Perform join
+merged_df = pd.merge(
+    df1, 
+    df2, 
+    on='customer_id', 
+    how='left'
+)
+
+# Save merged data
+merged_df.to_csv('merged_data.csv', index=False)`;
+                    break;
+                    
+                default:
+                    code = `# Data transformation operations
+import pandas as pd
+
+# Load your dataset
+df = pd.read_csv('your_data.csv')
+
+# Add calculated column
+df['full_name'] = df['first_name'] + ' ' + df['last_name']
+
+# Convert date column
+df['date'] = pd.to_datetime(df['date'])
+
+# Save transformed data
+df.to_csv('transformed_data.csv', index=False)`;
+            }
+            
+            return {
+                explanation: commonResponses[action] || `I'll process your ETL request to transform the dataset. The operation will affect the following columns: ${columns.slice(0, 3).join(', ')}${columns.length > 3 ? ' and more' : ''}.`,
+                code: code
+            };
+        }
+
+        // Copy code to clipboard
+        copyCodeButton.addEventListener('click', () => {
+            navigator.clipboard.writeText(generatedCode.textContent)
+                .then(() => {
+                    addLogEntry('Code copied to clipboard', 'success');
+                    copyCodeButton.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                    setTimeout(() => {
+                        copyCodeButton.innerHTML = '<i class="fas fa-copy"></i> Copy Code';
+                    }, 2000);
+                })
+                .catch(err => {
+                    addLogEntry('Failed to copy code: ' + err, 'error');
+                });
+        });
+
+        // Handle prompt submission
+        submitButton.addEventListener('click', () => {
+            const prompt = promptInput.value.trim();
+            if (prompt) {
+                processPrompt(prompt);
+                promptInput.value = '';
+            }
+        });
+
+        // Allow Enter key to submit (but Shift+Enter for new line)
+        promptInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                submitButton.click();
+            }
+        });
+
+        // Initial log entry with dataset info
+        addLogEntry(`Loaded dataset with ${dataset.columns.length} columns and sample data`, 'info');
+    </script>
+</body>
+</html>

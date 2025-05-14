@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NLP Tools for ETL - GENFLOW</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --primary-light: #6366f1;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --dark: #1e293b;
+            --light: #f8fafc;
+            --gray: #64748b;
+            --gray-light: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        body {
+            background-color: #f8fafc;
+            color: var(--dark);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            background-color: white;
+            border-radius: 8px;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: var(--primary);
+            font-size: 20px;
+        }
+
+        .logo-text {
+            font-weight: 700;
+            font-size: 22px;
+        }
+
+        .dataset-info {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .panel {
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--gray-light);
+            overflow: hidden;
+        }
+
+        .panel-header {
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--gray-light);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #f8fafc;
+        }
+
+        .panel-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .panel-body {
+            padding: 16px;
+        }
+
+        .prompt-form {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .form-control {
+            padding: 10px 12px;
+            border: 1px solid var(--gray-light);
+            border-radius: 6px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .button {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            border: none;
+            padding: 10px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
+        }
+
+        .button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .code-block {
+            background-color: #1e293b;
+            color: #f8fafc;
+            border-radius: 6px;
+            padding: 16px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .copy-button {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .copy-button:hover {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .logs-container {
+            max-height: 300px;
+            overflow-y: auto;
+            background-color: #f8fafc;
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 13px;
+        }
+
+        .log-entry {
+            padding: 8px 0;
+            border-bottom: 1px solid var(--gray-light);
+        }
+
+        .log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .log-time {
+            color: var(--gray);
+            font-size: 12px;
+            margin-right: 8px;
+        }
+
+        .log-message {
+            color: var(--dark);
+        }
+
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .suggestions {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .suggestion-card {
+            background-color: white;
+            border: 1px solid var(--gray-light);
+            border-radius: 6px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .suggestion-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .suggestion-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+
+        .suggestion-desc {
+            font-size: 12px;
+            color: var(--gray);
+        }
+
+        .columns-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .column-pill {
+            background-color: #e0e7ff;
+            color: var(--primary);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">G</div>
+                <div class="logo-text">GENFLOW</div>
+            </div>
+            <div class="dataset-info" id="datasetInfo">
+                <i class="fas fa-database"></i> Dataset: Loading...
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-comment-dots"></i>
+                        NLP Prompt
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="columns-list" id="columnsList"></div>
+                    <form class="prompt-form" id="promptForm">
+                        <div class="form-group">
+                            <label class="form-label">Describe your ETL transformation:</label>
+                            <textarea 
+                                class="form-control" 
+                                id="nlpPrompt" 
+                                placeholder="Example: Clean the data by removing null values, convert date columns to datetime format, and aggregate sales by region"
+                                required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Code Language:</label>
+                            <select class="form-control" id="codeLanguage">
+                                <option value="python">Python</option>
+                                <option value="pyspark">PySpark</option>
+                                <option value="sql">SQL</option>
+                                <option value="r">R</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="button" id="generateButton">
+                            <i class="fas fa-magic"></i>
+                            Generate ETL Code
+                        </button>
+                    </form>
+
+                    <div class="suggestions">
+                        <div class="suggestion-card" onclick="useSuggestion('Clean the data by removing null values and standardizing formats')">
+                            <div class="suggestion-title">Data Cleaning</div>
+                            <div class="suggestion-desc">Remove nulls, standardize formats</div>
+                        </div>
+                        <div class="suggestion-card" onclick="useSuggestion('Convert all date columns to datetime format')">
+                            <div class="suggestion-title">Date Conversion</div>
+                            <div class="suggestion-desc">Parse and convert date formats</div>
+                        </div>
+                        <div class="suggestion-card" onclick="useSuggestion('Aggregate numeric columns by category columns')">
+                            <div class="suggestion-title">Aggregation</div>
+                            <div class="suggestion-desc">Sum, average, count by groups</div>
+                        </div>
+                        <div class="suggestion-card" onclick="useSuggestion('Join this dataset with another dataset on common keys')">
+                            <div class="suggestion-title">Data Joining</div>
+                            <div class="suggestion-desc">Merge datasets together</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-code"></i>
+                        Generated ETL Code
+                    </div>
+                    <button class="button button-sm" id="copyButton">
+                        <i class="fas fa-copy"></i>
+                        Copy
+                    </button>
+                </div>
+                <div class="panel-body">
+                    <div class="code-block" id="codeOutput">
+                        <div style="color: #94a3b8; font-style: italic;">
+                            Your generated ETL code will appear here...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel" style="grid-column: span 2;">
+                <div class="panel-header">
+                    <div class="panel-title">
+                        <i class="fas fa-terminal"></i>
+                        Execution Logs
+                    </div>
+                </div>
+                <div class="panel-body">
+                    <div class="logs-container" id="logsContainer">
+                        <div class="log-entry">
+                            <span class="log-time" id="currentTime"></span>
+                            <span class="log-message">Ready to generate ETL code. Describe your transformation above.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Get data passed from main app
+        const nlpData = JSON.parse(sessionStorage.getItem('nlpToolsData') || '{}');
+        
+        // DOM elements
+        const datasetInfo = document.getElementById('datasetInfo');
+        const columnsList = document.getElementById('columnsList');
+        const promptForm = document.getElementById('promptForm');
+        const nlpPrompt = document.getElementById('nlpPrompt');
+        const codeLanguage = document.getElementById('codeLanguage');
+        const generateButton = document.getElementById('generateButton');
+        const codeOutput = document.getElementById('codeOutput');
+        const copyButton = document.getElementById('copyButton');
+        const logsContainer = document.getElementById('logsContainer');
+        const currentTime = document.getElementById('currentTime');
+        
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update dataset info
+            if (nlpData.filename) {
+                datasetInfo.innerHTML = `<i class="fas fa-database"></i> Dataset: ${nlpData.filename} (${nlpData.columns ? nlpData.columns.length : 0} columns)`;
+            }
+            
+            // Update columns list
+            if (nlpData.columns && nlpData.columns.length > 0) {
+                columnsList.innerHTML = nlpData.columns.map(col => 
+                    `<div class="column-pill">${col}</div>`
+                ).join('');
+            }
+            
+            // Update current time
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 1000);
+        });
+        
+        function updateCurrentTime() {
+            const now = new Date();
+            currentTime.textContent = now.toLocaleTimeString();
+        }
+        
+        function addLog(message) {
+            const now = new Date();
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            logEntry.innerHTML = `
+                <span class="log-time">${now.toLocaleTimeString()}</span>
+                <span class="log-message">${message}</span>
+            `;
+            logsContainer.prepend(logEntry);
+        }
+        
+        // Handle form submission
+        promptForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const prompt = nlpPrompt.value.trim();
+            const language = codeLanguage.value;
+            
+            if (!prompt) {
+                addLog('Error: Please enter a transformation description');
+                return;
+            }
+            
+            generateButton.disabled = true;
+            generateButton.innerHTML = `<i class="fas fa-spinner spinner"></i> Generating...`;
+            
+            addLog(`Generating ${language} code for: "${prompt}"`);
+            
+            // Simulate API call to LLM (in a real app, this would be a fetch call)
+            setTimeout(() => {
+                try {
+                    const generatedCode = generateETLCode(prompt, language, nlpData.columns);
+                    
+                    // Display the generated code
+                    codeOutput.innerHTML = `<pre>${generatedCode}</pre><button class="copy-button" onclick="copyToClipboard()"><i class="fas fa-copy"></i> Copy</button>`;
+                    
+                    addLog('Success: ETL code generated successfully');
+                } catch (error) {
+                    addLog(`Error: ${error.message}`);
+                    codeOutput.innerHTML = `<div style="color: #ef4444;">Error generating code: ${error.message}</div>`;
+                }
+                
+                generateButton.disabled = false;
+                generateButton.innerHTML = `<i class="fas fa-magic"></i> Generate ETL Code`;
+            }, 2000);
+        });
+        
+        // Function to generate sample ETL code (simulating LLM output)
+        function generateETLCode(prompt, language, columns) {
+            // This is a simulation - in a real app, you'd call an LLM API
+            const dateColumns = columns.filter(col => 
+                col.toLowerCase().includes('date') || 
+                col.toLowerCase().includes('time')
+            );
+            
+            const numericColumns = columns.filter(col => {
+                const sampleValue = nlpData.data[0]?.[col];
+                return !isNaN(parseFloat(sampleValue)) && isFinite(sampleValue);
+            });
+            
+            const textColumns = columns.filter(col => {
+                const sampleValue = nlpData.data[0]?.[col];
+                return typeof sampleValue === 'string' && 
+                       !dateColumns.includes(col) && 
+                       !numericColumns.includes(col);
+            });
+            
+            let code = '';
+            
+            switch(language) {
+                case 'python':
+                    code = `# ETL Pipeline generated from prompt: "${prompt}"\n`;
+                    code += `import pandas as pd\n\n`;
+                    code += `# Load the dataset\ndf = pd.read_csv('${nlpData.filename}.csv')\n\n`;
+                    
+                    if (prompt.toLowerCase().includes('clean') || prompt.toLowerCase().includes('null')) {
+                        code += `# Data cleaning - handle missing values\n`;
+                        code += `df = df.dropna(subset=[${columns.slice(0, 2).map(c => `'${c}'`).join(', ')}])\n\n`;
+                    }
+                    
+                    if (dateColumns.length > 0 && prompt.toLowerCase().includes('date')) {
+                        code += `# Convert date columns\n`;
+                        code += `df[${dateColumns.map(c => `'${c}'`).join(', ')}] = df[${dateColumns.map(c => `'${c}'`).join(', ')}].apply(pd.to_datetime)\n\n`;
+                    }
+                    
+                    if (numericColumns.length > 0 && prompt.toLowerCase().includes('aggregate')) {
+                        const categoryCol = columns.find(col => !numericColumns.includes(col)) || columns[0];
+                        code += `# Data aggregation\n`;
+                        code += `aggregated = df.groupby('${categoryCol}').agg({\n`;
+                        code += numericColumns.slice(0, 3).map(col => `    '${col}': ['sum', 'mean']`).join(',\n');
+                        code += `\n}).reset_index()\n\n`;
+                    }
+                    
+                    code += `# Output the transformed data\ndf.to_csv('transformed_${nlpData.filename}.csv', index=False)`;
+                    break;
+                    
+                case 'pyspark':
+                    code = `# PySpark ETL Pipeline generated from prompt: "${prompt}"\n`;
+                    code += `from pyspark.sql import SparkSession\n`;
+                    code += `from pyspark.sql.functions import col, to_date, sum, avg\n\n`;
+                    code += `spark = SparkSession.builder.appName("ETL").getOrCreate()\n\n`;
+                    code += `# Load the dataset\ndf = spark.read.csv('${nlpData.filename}.csv', header=True, inferSchema=True)\n\n`;
+                    
+                    if (dateColumns.length > 0 && prompt.toLowerCase().includes('date')) {
+                        code += `# Convert date columns\n`;
+                        dateColumns.forEach(col => {
+                            code += `df = df.withColumn('${col}', to_date(col('${col}')))\n`;
+                        });
+                        code += `\n`;
+                    }
+                    
+                    if (prompt.toLowerCase().includes('filter')) {
+                        const filterCol = numericColumns[0] || columns[0];
+                        code += `# Filter data\n`;
+                        code += `df = df.filter(col('${filterCol}') > 0)\n\n`;
+                    }
+                    
+                    if (numericColumns.length > 0 && prompt.toLowerCase().includes('aggregate')) {
+                        const categoryCol = columns.find(col => !numericColumns.includes(col)) || columns[0];
+                        code += `# Data aggregation\n`;
+                        code += `aggregated = df.groupBy('${categoryCol}').agg(\n`;
+                        code += numericColumns.slice(0, 3).map(col => 
+                            `    sum('${col}').alias('total_${col}'),\n    avg('${col}').alias('avg_${col}')`
+                        ).join(',\n');
+                        code += `\n)\n\n`;
+                    }
+                    
+                    code += `# Output the transformed data\n`;
+                    code += `df.write.mode('overwrite').csv('transformed_${nlpData.filename}')\n`;
+                    code += `spark.stop()`;
+                    break;
+                    
+                case 'sql':
+                    code = `-- SQL ETL Pipeline generated from prompt: "${prompt}"\n`;
+                    code += `-- Assuming data is in a table called 'source_data'\n\n`;
+                    
+                    if (prompt.toLowerCase().includes('clean') || prompt.toLowerCase().includes('null')) {
+                        code += `-- Clean data by removing rows with NULLs in key columns\n`;
+                        code += `CREATE TABLE cleaned_data AS\n`;
+                        code += `SELECT * FROM source_data\n`;
+                        code += `WHERE ${columns.slice(0, 2).map(c => `${c} IS NOT NULL`).join(' AND ')};\n\n`;
+                    }
+                    
+                    if (dateColumns.length > 0 && prompt.toLowerCase().includes('date')) {
+                        code += `-- Convert date columns (example for PostgreSQL)\n`;
+                        code += `ALTER TABLE cleaned_data\n`;
+                        dateColumns.forEach(col => {
+                            code += `ALTER COLUMN ${col} TYPE DATE USING ${col}::DATE,\n`;
+                        });
+                        code = code.slice(0, -2) + ';\n\n';
+                    }
+                    
+                    if (numericColumns.length > 0 && prompt.toLowerCase().includes('aggregate')) {
+                        const categoryCol = columns.find(col => !numericColumns.includes(col)) || columns[0];
+                        code += `-- Create aggregated view\n`;
+                        code += `CREATE VIEW aggregated_data AS\n`;
+                        code += `SELECT\n    ${categoryCol},\n`;
+                        code += numericColumns.slice(0, 3).map(col => 
+                            `    SUM(${col}) AS total_${col},\n    AVG(${col}) AS avg_${col}`
+                        ).join(',\n');
+                        code += `\nFROM cleaned_data\nGROUP BY ${categoryCol};`;
+                    }
+                    break;
+                    
+                default:
+                    throw new Error(`Unsupported language: ${language}`);
+            }
+            
+            return code;
+        }
+        
+        // Copy to clipboard function
+        function copyToClipboard() {
+            const code = codeOutput.querySelector('pre')?.textContent;
+            if (code) {
+                navigator.clipboard.writeText(code)
+                    .then(() => addLog('Code copied to clipboard'))
+                    .catch(err => addLog(`Error copying code: ${err}`));
+            }
+        }
+        
+        // Handle copy button click
+        copyButton.addEventListener('click', copyToClipboard);
+        
+        // Use suggestion function
+        function useSuggestion(suggestion) {
+            nlpPrompt.value = suggestion;
+            nlpPrompt.focus();
+        }
+    </script>
+</body>
+</html>
